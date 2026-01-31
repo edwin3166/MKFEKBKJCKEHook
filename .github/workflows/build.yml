@@ -12,39 +12,36 @@ jobs:
 
     steps:
     # -------------------------------
-    # 1️⃣ Repositorio
+    # 1️⃣ Checkout del repositorio
     # -------------------------------
     - name: Checkout repository
       uses: actions/checkout@v3
 
     # -------------------------------
-    # 2️⃣ Instalar Git (si no existe)
+    # 2️⃣ Instalar Homebrew y ldid
     # -------------------------------
-    - name: Install Git if missing
+    - name: Install Homebrew & ldid
       run: |
-        git --version || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && brew install git
+        # Instalar Homebrew
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $GITHUB_ENV
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+
+        # Instalar ldid
+        brew install ldid
 
     # -------------------------------
-    # 3️⃣ Instalar Perl completo
+    # 3️⃣ Instalar Git y Perl si faltan
     # -------------------------------
-    - name: Install Perl if missing
+    - name: Install Git & Perl
       run: |
+        git --version || brew install git
         perl -v || brew install perl
         export PATH="/usr/local/opt/perl/bin:$PATH"
         echo 'PATH="/usr/local/opt/perl/bin:$PATH"' >> $GITHUB_ENV
 
     # -------------------------------
-    # 4️⃣ Descargar ldid precompilado usando wget
-    # -------------------------------
-    - name: Download ldid
-      run: |
-        wget https://github.com/ProcursusTeam/ldid/releases/download/2.1.2/ldid-macos.zip -O ldid.zip
-        unzip ldid.zip -d $HOME/ldid
-        chmod +x $HOME/ldid/ldid
-        echo "$HOME/ldid" >> $GITHUB_PATH
-
-    # -------------------------------
-    # 5️⃣ Instalar Theos y bootstrap
+    # 4️⃣ Instalar Theos y bootstrap
     # -------------------------------
     - name: Install Theos
       run: |
@@ -55,7 +52,7 @@ jobs:
         sudo xcode-select -s /Applications/Xcode_16.4.app
 
     # -------------------------------
-    # 6️⃣ Verificar Theos
+    # 5️⃣ Verificar Theos
     # -------------------------------
     - name: Verify Theos
       run: |
@@ -63,7 +60,7 @@ jobs:
         ls $THEOS
 
     # -------------------------------
-    # 7️⃣ Compilar Tweak
+    # 6️⃣ Compilar el Tweak
     # -------------------------------
     - name: Build Tweak
       env:
@@ -74,7 +71,7 @@ jobs:
         make package
 
     # -------------------------------
-    # 8️⃣ Subir dylib
+    # 7️⃣ Subir dylib como artifact
     # -------------------------------
     - name: Upload dylib artifact
       uses: actions/upload-artifact@v4
