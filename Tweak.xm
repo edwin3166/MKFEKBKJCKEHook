@@ -1,6 +1,13 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
+// Declaración de clases para CaptainHook
+CHDeclareClass(UIApplication)
+CHDeclareClass(UILabel)
+CHDeclareClass(UIButton)
+CHDeclareClass(UIView)
+CHDeclareClass(UIWindow)
+
 // Variables globales del panel
 static UIView *mkPanel = nil;
 static BOOL aimbotEnabled = NO;
@@ -32,7 +39,7 @@ CHDeclareMethod1(void, UIApplication, toggleESP, UIButton*, sender) {
     [sender setTitle:title forState:UIControlStateNormal];
 }
 
-// Minimize panel
+// Minimizar panel
 CHDeclareMethod1(void, UIApplication, minimizePanel, UIButton*, sender) {
     if (mkPanel) mkPanel.hidden = YES;
 }
