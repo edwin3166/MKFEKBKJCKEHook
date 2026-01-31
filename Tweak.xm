@@ -1,49 +1,48 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
-// Variable global para activar/desactivar AimKill
 static BOOL aimKillEnabled = YES;
-
-// Botón flotante
 static UIButton *aimKillButton = nil;
 
 CHDeclareClass(UIApplication)
 
-CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, launchOptions) {
+CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
+    BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
-    // Llamada al método original
-    BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, launchOptions);
+    // Capturamos la primera escena que sea UIWindowScene
+    UIScene *firstScene = [UIApplication sharedApplication].connectedScenes.anyObject;
+    if ([firstScene isKindOfClass:[UIWindowScene class]]) {
+        UIWindowScene *windowScene = (UIWindowScene *)firstScene;
+        UIWindow *window = windowScene.windows.firstObject;
 
-    // Crear botón flotante si no existe
-    if (!aimKillButton) {
-        UIWindowScene *scene = [UIApplication sharedApplication].connectedScenes.anyObject;
-        UIWindow *window = scene.windows.firstObject;
-
+        // Creamos el botón AimKill
         aimKillButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        aimKillButton.frame = CGRectMake(20, 50, 100, 40);
+        aimKillButton.frame = CGRectMake(20, 50, 120, 40);
         [aimKillButton setTitle:@"AimKill ON" forState:UIControlStateNormal];
         [aimKillButton setBackgroundColor:[UIColor colorWithRed:1 green:0 blue:0 alpha:0.5]];
         [aimKillButton addTarget:self action:@selector(toggleAimKill:) forControlEvents:UIControlEventTouchUpInside];
+
         [window addSubview:aimKillButton];
     }
 
     return result;
 }
 
-// Toggle AimKill
+// Método del toggle
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     aimKillEnabled = !aimKillEnabled;
-    NSString *title = aimKillEnabled ? @"AimKill ON" : @"AimKill OFF";
-    [sender setTitle:title forState:UIControlStateNormal];
 
-    // Aquí puedes poner tu lógica de AimKill ON/OFF
-    if (aimKillEnabled) {
-        NSLog(@"AimKill activado");
-    } else {
-        NSLog(@"AimKill desactivado");
-    }
+    NSString *title = aimKillEnabled ? @"AimKill ON" : @"AimKill OFF";
+    [aimKillButton setTitle:title forState:UIControlStateNormal];
+
+    NSLog(@"[MKFEKBKJCKEHook] AimKill %@", aimKillEnabled ? @"activado" : @"desactivado");
+
+    // Aquí puedes llamar tu función de AimKill real:
+    // if (aimKillEnabled) { ... lógica de apuntado automático ... }
 }
 
 CHConstructor {
-    NSLog(@"MKFEKBKJCKEHook loaded");
+    CHLoadLateClass(UIApplication);
+    CHClassHook(UIApplication, didFinishLaunchingWithOptions);
+    CHClassHook(UIApplication, toggleAimKill:);
 }
