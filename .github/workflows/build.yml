@@ -39,13 +39,13 @@ jobs:
     # -------------------------------
     # 4️⃣ Instalar Theos moderno y actualizar vendor
     # -------------------------------
-    - name: Install Theos
+    - name: Install Theos and update vendor
       run: |
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
-        echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+        export THEOS=$HOME/theos
         sudo xcode-select -s /Applications/Xcode_16.4.app
-        # ⚡ Actualizar Theos para generar vendor/include y vendor/lib
-        $HOME/theos/bin/update-theos
+        $THEOS/bin/update-theos
+        echo "THEOS=$THEOS" >> $GITHUB_ENV
 
     # -------------------------------
     # 5️⃣ Verificar Theos
