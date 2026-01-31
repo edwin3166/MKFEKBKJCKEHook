@@ -11,47 +11,57 @@ jobs:
     runs-on: macos-latest
 
     steps:
+    # -------------------------------
+    # 1️⃣ Repositorio
+    # -------------------------------
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # ----------------------------------
-    # 1️⃣ Instalar Perl completo
-    # ----------------------------------
+    # -------------------------------
+    # 2️⃣ Instalar Git (para clonar Theos)
+    # -------------------------------
+    - name: Install Git
+      run: |
+        brew install git
+        git --version
+
+    # -------------------------------
+    # 3️⃣ Instalar Perl (evita errores dm.pl)
+    # -------------------------------
     - name: Install Perl
       run: |
         brew install perl
         export PATH="/usr/local/opt/perl/bin:$PATH"
         echo 'PATH="/usr/local/opt/perl/bin:$PATH"' >> $GITHUB_ENV
 
-    # ----------------------------------
-    # 2️⃣ Instalar Theos y bootstrap
-    # ----------------------------------
+    # -------------------------------
+    # 4️⃣ Instalar ldid (firmar dylib)
+    # -------------------------------
+    - name: Install ldid
+      run: brew install ldid
+
+    # -------------------------------
+    # 5️⃣ Instalar Theos y bootstrap
+    # -------------------------------
     - name: Install Theos
       run: |
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
         export THEOS=$HOME/theos
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-        $THEOS/bin/bootstrap.sh  # Asegura que todos los scripts Perl estén presentes
+        $THEOS/bin/bootstrap.sh
         sudo xcode-select -s /Applications/Xcode_16.4.app
 
-    # ----------------------------------
-    # 3️⃣ Instalar ldid
-    # ----------------------------------
-    - name: Install ldid
-      run: |
-        brew install ldid
-
-    # ----------------------------------
-    # 4️⃣ Verificar Theos
-    # ----------------------------------
+    # -------------------------------
+    # 6️⃣ Verificar Theos
+    # -------------------------------
     - name: Verify Theos
       run: |
         echo "THEOS is at $THEOS"
         ls $THEOS
 
-    # ----------------------------------
-    # 5️⃣ Build Tweak
-    # ----------------------------------
+    # -------------------------------
+    # 7️⃣ Compilar Tweak
+    # -------------------------------
     - name: Build Tweak
       env:
         THEOS: ${{ env.THEOS }}
@@ -60,9 +70,9 @@ jobs:
         make clean
         make package
 
-    # ----------------------------------
-    # 6️⃣ Subir dylib como artifact
-    # ----------------------------------
+    # -------------------------------
+    # 8️⃣ Subir dylib
+    # -------------------------------
     - name: Upload dylib artifact
       uses: actions/upload-artifact@v4
       with:
