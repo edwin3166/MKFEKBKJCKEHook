@@ -1,4 +1,4 @@
-name: Build Free Fire AimKill Tweak
+name: Build Free Fire AimKill Tweak (dylib only)
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         echo "/usr/local/opt/perl/bin" >> $GITHUB_PATH
 
     # -------------------------------
-    # 4️⃣ Instalar Theos (moderno, sin bootstrap)
+    # 4️⃣ Instalar Theos moderno
     # -------------------------------
     - name: Install Theos
       run: |
@@ -54,15 +54,15 @@ jobs:
         ls $THEOS
 
     # -------------------------------
-    # 6️⃣ Compilar el Tweak
+    # 6️⃣ Compilar el Tweak (solo dylib)
     # -------------------------------
-    - name: Build Tweak
+    - name: Build Tweak (dylib only)
       env:
         THEOS: ${{ env.THEOS }}
       run: |
         cd $GITHUB_WORKSPACE
         make clean
-        make package
+        make
 
     # -------------------------------
     # 7️⃣ Subir dylib como artifact
