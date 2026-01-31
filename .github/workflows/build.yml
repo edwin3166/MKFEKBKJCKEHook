@@ -10,21 +10,25 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
+      # 1️⃣ Traer tu repo
       - name: Checkout
         uses: actions/checkout@v3
 
+      # 2️⃣ Instalar Theos
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
+      # 3️⃣ Instalar toolchain (saltamos iphoneos-deploy.pkg)
       - name: Install Toolchain
         run: |
-          sudo installer -pkg $(xcrun --find iphoneos-deploy.pkg) -target /
+          echo "Skipping iphoneos-deploy.pkg installation, not needed on GitHub Actions"
 
-      # 🚫 Bootstrap step eliminado
+      # 4️⃣ Bootstrap eliminado (no existe bin/bootstrap.pl)
       # - name: Bootstrap
       #   run: bin/bootstrap.pl
 
+      # 5️⃣ Compilar el tweak
       - name: Build Tweak
         run: make package
         env:
