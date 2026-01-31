@@ -1,9 +1,8 @@
-name: Build Free Fire AimKill Tweak (dylib only)
+name: Build MKFEKBKJCKEHook dylib
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -11,66 +10,45 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    # -------------------------------
-    # 1️⃣ Checkout del repositorio
-    # -------------------------------
+    # -----------------------------
+    # 1️⃣ Checkout del repo
+    # -----------------------------
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # -------------------------------
+    # -----------------------------
     # 2️⃣ Instalar Homebrew y ldid
-    # -------------------------------
-    - name: Install Homebrew & ldid
+    # -----------------------------
+    - name: Install ldid
       run: |
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        # Agregar Homebrew al PATH
-        echo "/opt/homebrew/bin" >> $GITHUB_PATH
+        eval "$(/opt/homebrew/bin/brew shellenv)"
         brew install ldid
 
-    # -------------------------------
-    # 3️⃣ Instalar Git y Perl
-    # -------------------------------
-    - name: Install Git & Perl
-      run: |
-        git --version || brew install git
-        perl -v || brew install perl
-        echo "/usr/local/opt/perl/bin" >> $GITHUB_PATH
-
-    # -------------------------------
-    # 4️⃣ Instalar Theos moderno y actualizar vendor
-    # -------------------------------
-    - name: Install Theos and update vendor
+    # -----------------------------
+    # 3️⃣ Instalar Theos
+    # -----------------------------
+    - name: Install Theos
       run: |
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
         export THEOS=$HOME/theos
-        sudo xcode-select -s /Applications/Xcode_16.4.app
         $THEOS/bin/update-theos
-        echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-    # -------------------------------
-    # 5️⃣ Verificar Theos
-    # -------------------------------
-    - name: Verify Theos
+    # -----------------------------
+    # 4️⃣ Build dylib
+    # -----------------------------
+    - name: Build dylib
       run: |
-        echo "THEOS is at $THEOS"
-        ls $THEOS
-
-    # -------------------------------
-    # 6️⃣ Compilar el Tweak (solo dylib)
-    # -------------------------------
-    - name: Build Tweak (dylib only)
-      env:
-        THEOS: ${{ env.THEOS }}
-      run: |
+        export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
         make clean
         make
 
-    # -------------------------------
-    # 7️⃣ Subir dylib como artifact
-    # -------------------------------
+    # -----------------------------
+    # 5️⃣ Subir dylib como artifact
+    # -----------------------------
     - name: Upload dylib artifact
       uses: actions/upload-artifact@v4
       with:
         name: MKFEKBKJCKEHook-dylib
-        path: $GITHUB_WORKSPACE/.theos/obj/debug/*.dylib
+        path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
