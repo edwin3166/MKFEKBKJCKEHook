@@ -37,13 +37,12 @@ jobs:
         echo "/usr/local/opt/perl/bin" >> $GITHUB_PATH
 
     # -------------------------------
-    # 4️⃣ Instalar Theos y bootstrap
+    # 4️⃣ Instalar Theos (moderno, sin bootstrap)
     # -------------------------------
     - name: Install Theos
       run: |
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-        $HOME/theos/bin/bootstrap.sh
         sudo xcode-select -s /Applications/Xcode_16.4.app
 
     # -------------------------------
