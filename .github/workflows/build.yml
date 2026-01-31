@@ -14,22 +14,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # 2️⃣ Instalar Theos
+      # 2️⃣ Instalar Homebrew (si no está)
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "Homebrew ya instalado"
+
+      # 3️⃣ Instalar ldid (para firmar el dylib)
+      - name: Install ldid
+        run: |
+          brew install ldid
+
+      # 4️⃣ Instalar Theos
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      # 3️⃣ Instalar toolchain (saltamos iphoneos-deploy.pkg)
-      - name: Install Toolchain
-        run: |
-          echo "Skipping iphoneos-deploy.pkg installation, not needed on GitHub Actions"
-
-      # 4️⃣ Bootstrap eliminado (no existe bin/bootstrap.pl)
-      # - name: Bootstrap
-      #   run: bin/bootstrap.pl
-
       # 5️⃣ Compilar el tweak
       - name: Build Tweak
-        run: make package
+        run: |
+          cd $GITHUB_WORKSPACE
+          make package
         env:
           THEOS: $HOME/theos
+
+      # 6️⃣ Subir el .dylib como artifact
+      - name: Upload dylib
+        uses: actions/upload-artifact@v3
+        with:
+          name: MKFEKBKJCKEHook-dylib
+          path: .theos/obj/debug/MKFEKBKJCKEHook.dylib
