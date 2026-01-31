@@ -1,6 +1,7 @@
 ARCHS = arm64
 TARGET = iphone:clang:latest:15.0
 
+export THEOS ?= $(HOME)/theos
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = MKFEKBKJCKEHook
