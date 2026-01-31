@@ -1,80 +1,74 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
-// Declaración de clases para CaptainHook
-CHDeclareClass(UIApplication)
-CHDeclareClass(UILabel)
-CHDeclareClass(UIButton)
-CHDeclareClass(UIView)
-CHDeclareClass(UIWindow)
-
-// Variables globales del panel
-static UIView *mkPanel = nil;
+// Variables globales para los toggles
 static BOOL aimbotEnabled = NO;
 static BOOL espEnabled = NO;
+static UIView *mkPanel = nil;
 
-// Helper: Crear botón
-static UIButton* createButton(CGRect frame, NSString *title, SEL action, id target) {
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    button.frame = frame;
-    [button setTitle:title forState:UIControlStateNormal];
-    [button addTarget:target action:action forControlEvents:UIControlEventTouchUpInside];
-    button.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.6];
-    button.layer.cornerRadius = 8;
-    button.tintColor = [UIColor whiteColor];
-    return button;
+// Función para mostrar el panel
+void showMKPanel() {
+    if (mkPanel) return; // Evitar duplicados
+
+    UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+    if (!keyWindow) return;
+
+    mkPanel = [[UIView alloc] initWithFrame:CGRectMake(50, 100, 200, 120)];
+    mkPanel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
+    mkPanel.layer.cornerRadius = 10;
+
+    // Botón Aimbot
+    UIButton *aimButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    aimButton.frame = CGRectMake(10, 10, 180, 30);
+    [aimButton setTitle:@"Aimbot OFF" forState:UIControlStateNormal];
+    [aimButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [aimButton addTarget:nil action:@selector(toggleAimbot:) forControlEvents:UIControlEventTouchUpInside];
+    [mkPanel addSubview:aimButton];
+
+    // Botón ESP
+    UIButton *espButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    espButton.frame = CGRectMake(10, 50, 180, 30);
+    [espButton setTitle:@"ESP OFF" forState:UIControlStateNormal];
+    [espButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [espButton addTarget:nil action:@selector(toggleESP:) forControlEvents:UIControlEventTouchUpInside];
+    [mkPanel addSubview:espButton];
+
+    // Botón minimizar
+    UIButton *minButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    minButton.frame = CGRectMake(10, 90, 180, 20);
+    [minButton setTitle:@"Minimizar" forState:UIControlStateNormal];
+    [minButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [minButton addTarget:nil action:@selector(minimizePanel:) forControlEvents:UIControlEventTouchUpInside];
+    [mkPanel addSubview:minButton];
+
+    [keyWindow addSubview:mkPanel];
 }
 
-// Toggle Aimbot
-CHDeclareMethod1(void, UIApplication, toggleAimbot, UIButton*, sender) {
+// Métodos de toggle
+CHDeclareMethod1(void, UIApplication, toggleAimbot, UIButton *, sender) {
     aimbotEnabled = !aimbotEnabled;
     NSString *title = aimbotEnabled ? @"Aimbot ON" : @"Aimbot OFF";
     [sender setTitle:title forState:UIControlStateNormal];
 }
 
-// Toggle ESP
-CHDeclareMethod1(void, UIApplication, toggleESP, UIButton*, sender) {
+CHDeclareMethod1(void, UIApplication, toggleESP, UIButton *, sender) {
     espEnabled = !espEnabled;
     NSString *title = espEnabled ? @"ESP ON" : @"ESP OFF";
     [sender setTitle:title forState:UIControlStateNormal];
 }
 
-// Minimizar panel
-CHDeclareMethod1(void, UIApplication, minimizePanel, UIButton*, sender) {
-    if (mkPanel) mkPanel.hidden = YES;
+CHDeclareMethod1(void, UIApplication, minimizePanel, UIButton *, sender) {
+    if (!mkPanel) return;
+    BOOL hidden = !mkPanel.hidden;
+    mkPanel.hidden = hidden;
+    [sender setTitle:(hidden ? @"Expandir" : @"Minimizar") forState:UIControlStateNormal];
 }
 
-// Mostrar panel
-CHDeclareMethod0(void, UIApplication, showMKPanel) {
-    if (mkPanel) {
-        mkPanel.hidden = NO;
-        return;
-    }
-
-    UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
-    if (!window) return;
-
-    mkPanel = [[UIView alloc] initWithFrame:CGRectMake(20, 100, 200, 150)];
-    mkPanel.backgroundColor = [[UIColor darkGrayColor] colorWithAlphaComponent:0.8];
-    mkPanel.layer.cornerRadius = 10;
-
-    UIButton *aimbotBtn = createButton(CGRectMake(20, 20, 160, 40), @"Aimbot OFF", @selector(toggleAimbot:), (id)[UIApplication sharedApplication]);
-    UIButton *espBtn = createButton(CGRectMake(20, 70, 160, 40), @"ESP OFF", @selector(toggleESP:), (id)[UIApplication sharedApplication]);
-    UIButton *minBtn = createButton(CGRectMake(20, 120, 160, 20), @"Minimizar", @selector(minimizePanel:), (id)[UIApplication sharedApplication]);
-
-    [mkPanel addSubview:aimbotBtn];
-    [mkPanel addSubview:espBtn];
-    [mkPanel addSubview:minBtn];
-
-    [window addSubview:mkPanel];
-}
-
-// Hook al inicio de la app
+// Hook a didFinishLaunching para mostrar el panel al iniciar
 CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
-    // Mostrar panel MK al iniciar
-    [UIApplication showMKPanel];
+    showMKPanel(); // Mostrar panel al iniciar
 
     return YES;
 }
