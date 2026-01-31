@@ -22,23 +22,19 @@ jobs:
     # -------------------------------
     - name: Install Homebrew & ldid
       run: |
-        # Instalar Homebrew
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $GITHUB_ENV
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-
-        # Instalar ldid
+        # Agregar Homebrew al PATH
+        echo "/opt/homebrew/bin" >> $GITHUB_PATH
         brew install ldid
 
     # -------------------------------
-    # 3️⃣ Instalar Git y Perl si faltan
+    # 3️⃣ Instalar Git y Perl
     # -------------------------------
     - name: Install Git & Perl
       run: |
         git --version || brew install git
         perl -v || brew install perl
-        export PATH="/usr/local/opt/perl/bin:$PATH"
-        echo 'PATH="/usr/local/opt/perl/bin:$PATH"' >> $GITHUB_ENV
+        echo "/usr/local/opt/perl/bin" >> $GITHUB_PATH
 
     # -------------------------------
     # 4️⃣ Instalar Theos y bootstrap
@@ -46,9 +42,8 @@ jobs:
     - name: Install Theos
       run: |
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
-        export THEOS=$HOME/theos
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-        $THEOS/bin/bootstrap.sh
+        $HOME/theos/bin/bootstrap.sh
         sudo xcode-select -s /Applications/Xcode_16.4.app
 
     # -------------------------------
