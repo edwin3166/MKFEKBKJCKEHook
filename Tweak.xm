@@ -10,7 +10,7 @@ void setAimKillEnabled(BOOL enabled) { AimKillEnabled = enabled; }
 BOOL isAimKillEnabled() { return AimKillEnabled; }
 
 // --------------------------
-// Clase AimKill original
+// Clase AimKill para Free Fire
 // --------------------------
 @interface MKFEKBKJCKE : NSObject
 @property (nonatomic) float AHFNKDJFBEA;
@@ -53,9 +53,7 @@ BOOL isAimKillEnabled() { return AimKillEnabled; }
         return;
     }
 
-    // --------------------------
     // Código de AimKill para Free Fire
-    // --------------------------
     _HDLKIEHBAKG += 1.0f;
     _HJMDIBKNPLO += 2.0f;
     _CNNNMCAMAEM += 3.0f;
@@ -75,8 +73,26 @@ CHDeclareClass(UIApplication)
 CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
-    // Obtener la ventana principal compatible con iOS 13+
-    UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
+    // Obtener ventana principal compatible con iOS 13+
+    UIWindow *window = nil;
+
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if ([scene isKindOfClass:[UIWindowScene class]]) {
+            UIWindowScene *windowScene = (UIWindowScene *)scene;
+            for (UIWindow *w in windowScene.windows) {
+                if (w.isKeyWindow) {
+                    window = w;
+                    break;
+                }
+            }
+        }
+        if (window) break;
+    }
+
+    // Fallback por si no encuentra ventana principal
+    if (!window) {
+        window = [UIApplication sharedApplication].windows.firstObject;
+    }
 
     // Crear botón flotante
     UIButton *aimkillButton = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -94,7 +110,7 @@ CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSD
 }
 
 // --------------------------
-// Método toggle
+// Método toggle para el botón
 // --------------------------
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     AimKillEnabled = !AimKillEnabled;
