@@ -1,35 +1,29 @@
-name: Build iOS Tweak
+name: Build Tweak
 
 on:
   push:
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Install Theos
-      run: |
-        git clone --recursive https://github.com/theos/theos.git $HOME/theos
-        echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-        echo "$HOME/theos/bin" >> $GITHUB_PATH
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-    - name: Install Toolchain
-      run: |
-        cd $THEOS
-        perl bin/bootstrap.pl iphoneos-arm64
+      - name: Install Toolchain
+        run: |
+          echo "Skipping iphoneos-deploy.pkg installation, not needed on GitHub Actions"
 
-    - name: Build Tweak
-      run: |
-        make clean
-        make
-
-    - name: Upload dylib
-      uses: actions/upload-artifact@v4
-      with:
-        name: MKFEKBKJCKEHook-dylib
-        path: .theos/obj/*.dylib
+      - name: Build Tweak
+        run: |
+          cd $GITHUB_WORKSPACE
+          make package
+        env:
+          THEOS: $HOME/theos
