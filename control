@@ -1,0 +1,8 @@
+Package: com.yourname.mkfekbkjcke
+Name: MKFEKBKJCKE TrollFools Hook
+Version: 1.0
+Architecture: iphoneos-arm64
+Description: Passthrough hook (no changes)
+Maintainer: you
+Author: you
+Section: Tweaks
