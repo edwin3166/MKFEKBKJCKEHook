@@ -1,12 +1,21 @@
+// Tweak.xm
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
+// Declaramos la clase UIApplication para CaptainHook
+CHDeclareClass(UIApplication)
+
+// Variables globales para el estado de tus toggles
 static BOOL aimbotEnabled = NO;
 static BOOL espEnabled = NO;
-static UIView *mkPanel = nil;
 
-#pragma mark - Buttons
+// Función para mostrar el panel MK
+static void showMKPanel(id self) {
+    // Aquí tu código para mostrar el panel
+    NSLog(@"MK Panel shown!");
+}
 
+// Funciones de botones (no como métodos de UIApplication)
 static void toggleAimbot(UIButton *sender) {
     aimbotEnabled = !aimbotEnabled;
     NSString *title = aimbotEnabled ? @"Aimbot ON" : @"Aimbot OFF";
@@ -20,47 +29,26 @@ static void toggleESP(UIButton *sender) {
 }
 
 static void minimizePanel(UIButton *sender) {
-    if (mkPanel) mkPanel.hidden = YES;
+    // Código para minimizar el panel
+    NSLog(@"Panel minimized!");
 }
 
-static void showMKPanel(UIApplication *app) {
-    if (!mkPanel) {
-        mkPanel = [[UIView alloc] initWithFrame:CGRectMake(50,50,200,150)];
-        mkPanel.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8];
-        mkPanel.layer.cornerRadius = 10;
+// Hook al método didFinishLaunchingWithOptions de UIApplication
+CHOptimizedMethod1(0, BOOL, UIApplication, application, didFinishLaunchingWithOptions, NSDictionary *, options) {
+    // Llamamos al método original
+    CHSuper1(UIApplication, application, didFinishLaunchingWithOptions, options);
 
-        UIButton *aimbotBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        aimbotBtn.frame = CGRectMake(20, 20, 160, 30);
-        [aimbotBtn setTitle:@"Aimbot OFF" forState:UIControlStateNormal];
-        [aimbotBtn addTarget:nil action:@selector(toggleAimbotAction:) forControlEvents:UIControlEventTouchUpInside];
-        [mkPanel addSubview:aimbotBtn];
+    // Mostramos el panel MK al iniciar la app
+    showMKPanel(self);
 
-        UIButton *espBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        espBtn.frame = CGRectMake(20, 60, 160, 30);
-        [espBtn setTitle:@"ESP OFF" forState:UIControlStateNormal];
-        [espBtn addTarget:nil action:@selector(toggleESPAction:) forControlEvents:UIControlEventTouchUpInside];
-        [mkPanel addSubview:espBtn];
-
-        UIButton *minimizeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        minimizeBtn.frame = CGRectMake(20, 100, 160, 30);
-        [minimizeBtn setTitle:@"Minimizar" forState:UIControlStateNormal];
-        [minimizeBtn addTarget:nil action:@selector(minimizePanelAction:) forControlEvents:UIControlEventTouchUpInside];
-        [mkPanel addSubview:minimizeBtn];
-    }
-
-    UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
-    if (![mkPanel isDescendantOfView:keyWindow]) [keyWindow addSubview:mkPanel];
-    mkPanel.hidden = NO;
+    return YES;
 }
 
-#pragma mark - Hook
+// Hook opcional a otra función si quieres
+// CHDeclareMethod1(void, UIApplication, otraFuncion, ...)
 
+// Inicialización de CaptainHook
 CHConstructor {
+    // Registramos la clase
     CHLoadLateClass(UIApplication);
-
-    CHHook(UIApplication, didFinishLaunchingWithOptions) {
-        CHSuper(UIApplication, didFinishLaunchingWithOptions, options);
-
-        showMKPanel(self);
-    };
 }
