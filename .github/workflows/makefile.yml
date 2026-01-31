@@ -1,47 +1,49 @@
-name: Build Tweak
+name: Build MKFEKBKJCKEHook dylib
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    # 1️⃣ Checkout del repo
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install Homebrew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "Homebrew ya instalado"
+    # 2️⃣ Instalar Homebrew y ldid
+    - name: Install ldid
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        brew install ldid
 
-      - name: Install ldid
-        run: |
-          brew install ldid
+    # 3️⃣ Instalar Theos
+    - name: Install Theos
+      run: |
+        git clone --branch master https://github.com/theos/theos.git $HOME/theos
+        export THEOS=$HOME/theos
+        $THEOS/bin/update-theos
 
-      - name: Install Theos
-        run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+    # 4️⃣ Configurar el entorno Theos y compilación
+    - name: Build dylib
+      run: |
+        export THEOS=$HOME/theos
+        cd $GITHUB_WORKSPACE
+        make clean
+        # Evitar que warnings aborten la compilación
+        export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla -Wno-error=unused-function -Wno-error=deprecated-declarations"
+        # Compilar el tweak
+        make package
 
-      - name: Build Tweak
-        run: |
-          cd $GITHUB_WORKSPACE
-          make package
-        env:
-          THEOS: $HOME/theos
-
-      # Subir el dylib como artifact
-      - name: Upload dylib
-        uses: actions/upload-artifact@v3
-        with:
-          name: MKFEKBKJCKEHook-dylib
-          path: .theos/obj/debug/MKFEKBKJCKEHook.dylib
-
-      # Subir el deb (opcional)
-      - name: Upload deb
-        uses: actions/upload-artifact@v3
-        with:
-          name: MKFEKBKJCKEHook-deb
-          path: packages/*.deb
+    # 5️⃣ Subir dylib como artifact
+    - name: Upload dylib artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MKFEKBKJCKEHook-dylib
+        path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
+        if-no-files-found: warn
