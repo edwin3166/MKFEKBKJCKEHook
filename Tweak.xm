@@ -1,13 +1,29 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
-// Hook del UIApplication
-CHDeclareClass(UIApplication)
+static BOOL aimbotEnabled = NO;
+static BOOL espEnabled = NO;
 
-CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
-    // Llamamos al método original
-    CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
+// Ejemplo: toggle Aimbot
+CHDeclareMethod1(void, UIButton, toggleAimbot:, UIButton *sender) {
+    aimbotEnabled = !aimbotEnabled;
+    NSString *title = aimbotEnabled ? @"Aimbot ON" : @"Aimbot OFF";
+    [sender setTitle:title forState:UIControlStateNormal];
+}
 
-    NSLog(@"[MKFEKBKJCKEHook] App launched - panel ready!");
-    return YES;
+// Ejemplo: toggle ESP
+CHDeclareMethod1(void, UIButton, toggleESP:, UIButton *sender) {
+    espEnabled = !espEnabled;
+    NSString *title = espEnabled ? @"ESP ON" : @"ESP OFF";
+    [sender setTitle:title forState:UIControlStateNormal];
+}
+
+// Hook didFinishLaunching
+CHOptimizedMethod1(0, BOOL, UIApplication, application, didFinishLaunchingWithOptions, NSDictionary *, options) {
+    BOOL result = CHSuper1(UIApplication, application, didFinishLaunchingWithOptions, options);
+
+    // Aquí tu función para mostrar panel
+    // showMKPanel(self);
+
+    return result;
 }
