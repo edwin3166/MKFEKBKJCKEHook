@@ -2,12 +2,16 @@
 #import <Foundation/Foundation.h>
 #import <CaptainHook/CaptainHook.h>
 
-// Toggle global
+// --------------------------
+// Toggle global AimKill
+// --------------------------
 static BOOL AimKillEnabled = YES;
 void setAimKillEnabled(BOOL enabled) { AimKillEnabled = enabled; }
 BOOL isAimKillEnabled() { return AimKillEnabled; }
 
-// Clase AimKill
+// --------------------------
+// Clase AimKill original
+// --------------------------
 @interface MKFEKBKJCKE : NSObject
 @property (nonatomic) float AHFNKDJFBEA;
 @property (nonatomic) int BOJDJLMBIMB;
@@ -24,6 +28,7 @@ BOOL isAimKillEnabled() { return AimKillEnabled; }
 @end
 
 @implementation MKFEKBKJCKE
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -48,37 +53,49 @@ BOOL isAimKillEnabled() { return AimKillEnabled; }
         return;
     }
 
-    // Código original AimKill
+    // --------------------------
+    // Código de AimKill para Free Fire
+    // --------------------------
     _HDLKIEHBAKG += 1.0f;
     _HJMDIBKNPLO += 2.0f;
     _CNNNMCAMAEM += 3.0f;
     _GHNEHECJLNM += 4.0f;
     _EDHBKJJPLCP += 5.0f;
+
     NSLog(@"[AimKill] Ejecutado");
 }
+
 @end
 
-// Hook aplicación
+// --------------------------
+// Hook para añadir botón flotante
+// --------------------------
 CHDeclareClass(UIApplication)
 
 CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
+    // Obtener la ventana principal compatible con iOS 13+
+    UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
+
+    // Crear botón flotante
     UIButton *aimkillButton = [UIButton buttonWithType:UIButtonTypeSystem];
     aimkillButton.frame = CGRectMake(20, 100, 140, 40);
     [aimkillButton setTitle:@"AimKill ON" forState:UIControlStateNormal];
     aimkillButton.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
     aimkillButton.layer.cornerRadius = 8;
-
     [aimkillButton addTarget:self action:@selector(toggleAimKill:) forControlEvents:UIControlEventTouchUpInside];
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[UIApplication sharedApplication].keyWindow addSubview:aimkillButton];
+        [window addSubview:aimkillButton];
     });
 
     return result;
 }
 
+// --------------------------
+// Método toggle
+// --------------------------
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     AimKillEnabled = !AimKillEnabled;
     NSString *title = AimKillEnabled ? @"AimKill ON" : @"AimKill OFF";
@@ -86,7 +103,9 @@ CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     NSLog(@"[AimKill] Toggle: %@", AimKillEnabled ? @"ON" : @"OFF");
 }
 
-// Constructor
+// --------------------------
+// Constructor del tweak
+// --------------------------
 CHConstructor {
     NSLog(@"[MKFEKBKJCKEHook] Tweak cargado");
 
