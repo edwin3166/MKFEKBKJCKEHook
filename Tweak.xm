@@ -7,10 +7,10 @@ static UIView *mkPanel = nil;
 
 CHDeclareClass(UIApplication);
 
-CHOptimizedMethod1(void, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
+// didFinishLaunchingWithOptions corregido
+CHOptimizedMethod1(self, void, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
     
-    // Crear panel
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     mkPanel = [[UIView alloc] initWithFrame:CGRectMake(50, 100, 200, 150)];
     mkPanel.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.7];
