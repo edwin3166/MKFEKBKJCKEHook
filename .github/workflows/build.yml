@@ -12,33 +12,36 @@ jobs:
 
     steps:
     # -------------------------------
-    # 1️⃣ Repositorio
+    # 1️⃣ Checkout repository
     # -------------------------------
     - name: Checkout repository
       uses: actions/checkout@v3
 
     # -------------------------------
-    # 2️⃣ Instalar Git (para clonar Theos)
+    # 2️⃣ Instalar Git (si no existe)
     # -------------------------------
     - name: Install Git
       run: |
-        brew install git
-        git --version
+        git --version || brew install git
 
     # -------------------------------
-    # 3️⃣ Instalar Perl (evita errores dm.pl)
+    # 3️⃣ Instalar Perl completo
     # -------------------------------
     - name: Install Perl
       run: |
-        brew install perl
+        perl -v || brew install perl
         export PATH="/usr/local/opt/perl/bin:$PATH"
         echo 'PATH="/usr/local/opt/perl/bin:$PATH"' >> $GITHUB_ENV
 
     # -------------------------------
-    # 4️⃣ Instalar ldid (firmar dylib)
+    # 4️⃣ Descargar ldid precompilado
     # -------------------------------
-    - name: Install ldid
-      run: brew install ldid
+    - name: Download ldid
+      run: |
+        curl -L -o ldid.zip https://github.com/ProcursusTeam/ldid/releases/download/2.1.2/ldid-macos.zip
+        unzip ldid.zip -d $HOME/ldid
+        chmod +x $HOME/ldid/ldid
+        echo "$HOME/ldid" >> $GITHUB_PATH
 
     # -------------------------------
     # 5️⃣ Instalar Theos y bootstrap
