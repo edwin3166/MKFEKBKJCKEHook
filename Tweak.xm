@@ -61,7 +61,7 @@ BOOL isAimKillEnabled() {
     }
 
     // --------------------------
-    // Aquí va tu código original de AimKill
+    // Código original del AimKill
     // --------------------------
     _HDLKIEHBAKG += 1.0f;
     _HJMDIBKNPLO += 2.0f;
@@ -75,13 +75,13 @@ BOOL isAimKillEnabled() {
 @end
 
 // --------------------------
-// Toggle flotante en pantalla
+// Hook: agregar botón flotante al inicio de la app
 // --------------------------
 CHDeclareClass(UIApplication)
 
-CHOptimizedMethod0(self, void, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
+CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
 
-    CHSuper0(UIApplication, didFinishLaunchingWithOptions, options);
+    BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
     // Crear botón flotante
     UIButton *aimkillButton = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -90,15 +90,19 @@ CHOptimizedMethod0(self, void, UIApplication, didFinishLaunchingWithOptions, NSD
     aimkillButton.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
     aimkillButton.layer.cornerRadius = 8;
 
-    [aimkillButton addTarget:[UIApplication sharedApplication] action:@selector(toggleAimKill:) forControlEvents:UIControlEventTouchUpInside];
+    [aimkillButton addTarget:self action:@selector(toggleAimKill:) forControlEvents:UIControlEventTouchUpInside];
 
     // Añadir al keyWindow
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [[UIApplication sharedApplication].keyWindow addSubview:aimkillButton];
     });
+
+    return result;
 }
 
-// Método para el toggle
+// --------------------------
+// Método para toggle
+// --------------------------
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     AimKillEnabled = !AimKillEnabled;
     NSString *title = AimKillEnabled ? @"AimKill ON" : @"AimKill OFF";
@@ -112,6 +116,10 @@ CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
 CHConstructor {
     NSLog(@"[MKFEKBKJCKEHook] Tweak cargado");
 
+    // Instancia de prueba para UpdateAimKill
+    MKFEKBKJCKE *aimkill = [[MKFEKBKJCKE alloc] init];
+    [aimkill UpdateAimKill];
+}
     // Instancia de prueba para UpdateAimKill
     MKFEKBKJCKE *aimkill = [[MKFEKBKJCKE alloc] init];
     [aimkill UpdateAimKill];
