@@ -1,0 +1,10 @@
+ARCHS = arm64
+TARGET = iphone:clang:latest:15.0
+
+include $(THEOS)/makefiles/common.mk
+
+TWEAK_NAME = MKFEKBKJCKEHook
+MKFEKBKJCKEHook_FILES = Tweak.xm
+MKFEKBKJCKEHook_CFLAGS = -fobjc-arc
+
+include $(THEOS_MAKE_PATH)/tweak.mk
