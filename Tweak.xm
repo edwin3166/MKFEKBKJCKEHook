@@ -1,136 +1,117 @@
 #import <UIKit/UIKit.h>
 
-static BOOL aimbotEnabled = NO;
+static BOOL aimBotEnabled = NO;
 static BOOL espEnabled = NO;
-static BOOL menuMinimized = NO;
 
-static UIView *menuView;
-static UIButton *menuButton;
-static UIView *contentView;
+@interface MKMenuView : UIView
+@property (nonatomic, strong) UIButton *minimizeButton;
+@property (nonatomic, strong) UISwitch *aimbotSwitch;
+@property (nonatomic, strong) UISwitch *espSwitch;
+@property (nonatomic, assign) BOOL minimized;
+@end
 
-UIWindow *getKeyWindow() {
-    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-        if (scene.activationState == UISceneActivationStateForegroundActive &&
-            [scene isKindOfClass:[UIWindowScene class]]) {
-            UIWindowScene *windowScene = (UIWindowScene *)scene;
-            for (UIWindow *window in windowScene.windows) {
-                if (window.isKeyWindow) {
-                    return window;
-                }
+@implementation MKMenuView
+
+- (instancetype)init {
+    self = [super initWithFrame:CGRectMake(20, 100, 220, 160)];
+    if (self) {
+        self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
+        self.layer.cornerRadius = 12;
+        self.clipsToBounds = YES;
+
+        UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 8, 220, 20)];
+        title.text = @"MK Panel";
+        title.textColor = UIColor.whiteColor;
+        title.textAlignment = NSTextAlignmentCenter;
+        title.font = [UIFont boldSystemFontOfSize:16];
+        [self addSubview:title];
+
+        // Aimbot
+        UILabel *aimLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 40, 120, 30)];
+        aimLabel.text = @"Aimbot";
+        aimLabel.textColor = UIColor.whiteColor;
+        [self addSubview:aimLabel];
+
+        self.aimbotSwitch = [[UISwitch alloc] initWithFrame:CGRectMake(150, 40, 0, 0)];
+        [self.aimbotSwitch addTarget:self action:@selector(toggleAimbot:) forControlEvents:UIControlEventValueChanged];
+        [self addSubview:self.aimbotSwitch];
+
+        // ESP
+        UILabel *espLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 80, 120, 30)];
+        espLabel.text = @"ESP";
+        espLabel.textColor = UIColor.whiteColor;
+        [self addSubview:espLabel];
+
+        self.espSwitch = [[UISwitch alloc] initWithFrame:CGRectMake(150, 80, 0, 0)];
+        [self.espSwitch addTarget:self action:@selector(toggleESP:) forControlEvents:UIControlEventValueChanged];
+        [self addSubview:self.espSwitch];
+
+        // Minimize button
+        self.minimizeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        self.minimizeButton.frame = CGRectMake(10, 120, 200, 30);
+        [self.minimizeButton setTitle:@"Minimizar" forState:UIControlStateNormal];
+        [self.minimizeButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+        [self.minimizeButton addTarget:self action:@selector(toggleMinimize) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:self.minimizeButton];
+
+        // Drag
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+        [self addGestureRecognizer:pan];
+    }
+    return self;
+}
+
+- (void)toggleAimbot:(UISwitch *)sw {
+    aimBotEnabled = sw.isOn;
+    NSLog(@"[MK] Aimbot %@", aimBotEnabled ? @"ON" : @"OFF");
+}
+
+- (void)toggleESP:(UISwitch *)sw {
+    espEnabled = sw.isOn;
+    NSLog(@"[MK] ESP %@", espEnabled ? @"ON" : @"OFF");
+}
+
+- (void)toggleMinimize {
+    self.minimized = !self.minimized;
+
+    if (self.minimized) {
+        self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, 120, 40);
+        [self.minimizeButton setTitle:@"Abrir" forState:UIControlStateNormal];
+        self.aimbotSwitch.hidden = YES;
+        self.espSwitch.hidden = YES;
+        for (UIView *v in self.subviews) {
+            if ([v isKindOfClass:[UILabel class]] && ![(UILabel *)v.text isEqualToString:@"MK Panel"]) {
+                v.hidden = YES;
             }
         }
+    } else {
+        self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, 220, 160);
+        [self.minimizeButton setTitle:@"Minimizar" forState:UIControlStateNormal];
+        self.aimbotSwitch.hidden = NO;
+        self.espSwitch.hidden = NO;
+        for (UIView *v in self.subviews) {
+            v.hidden = NO;
+        }
     }
-    return nil;
 }
 
-void toggleMenu() {
-    menuView.hidden = !menuView.hidden;
+- (void)handlePan:(UIPanGestureRecognizer *)pan {
+    CGPoint translation = [pan translationInView:self.superview];
+    self.center = CGPointMake(self.center.x + translation.x, self.center.y + translation.y);
+    [pan setTranslation:CGPointZero inView:self.superview];
 }
 
-void toggleMinimize() {
-    menuMinimized = !menuMinimized;
-    contentView.hidden = menuMinimized;
+@end
 
-    CGRect frame = menuView.frame;
-    frame.size.height = menuMinimized ? 50 : 160;
-    menuView.frame = frame;
-}
+%ctor {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        UIWindow *window = UIApplication.sharedApplication.connectedScenes.allObjects.count
+            ? ((UIWindowScene *)UIApplication.sharedApplication.connectedScenes.allObjects.firstObject).windows.firstObject
+            : nil;
 
-void switchAimbot(UISwitch *sw) {
-    aimbotEnabled = sw.isOn;
-}
-
-void switchESP(UISwitch *sw) {
-    espEnabled = sw.isOn;
-}
-
-void handleDrag(UIPanGestureRecognizer *gesture) {
-    UIView *v = gesture.view;
-    CGPoint t = [gesture translationInView:v.superview];
-    v.center = CGPointMake(v.center.x + t.x, v.center.y + t.y);
-    [gesture setTranslation:CGPointZero inView:v.superview];
-}
-
-UIView *createMenu() {
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(50, 120, 220, 160)];
-    view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.85];
-    view.layer.cornerRadius = 12;
-    view.hidden = YES;
-
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 160, 30)];
-    title.text = @"MK Panel";
-    title.textColor = UIColor.whiteColor;
-    title.font = [UIFont boldSystemFontOfSize:18];
-    [view addSubview:title];
-
-    UIButton *minBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    minBtn.frame = CGRectMake(180, 10, 30, 30);
-    [minBtn setTitle:@"—" forState:UIControlStateNormal];
-    [minBtn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
-    minBtn.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-    [minBtn addTarget:nil action:@selector(toggleMinimize) forControlEvents:UIControlEventTouchUpInside];
-    [view addSubview:minBtn];
-
-    contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 50, 220, 110)];
-    [view addSubview:contentView];
-
-    UILabel *aimLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 10, 120, 25)];
-    aimLabel.text = @"Aimbot";
-    aimLabel.textColor = UIColor.whiteColor;
-    [contentView addSubview:aimLabel];
-
-    UISwitch *aimSwitch = [[UISwitch alloc] initWithFrame:CGRectMake(150, 5, 0, 0)];
-    [aimSwitch addTarget:nil action:@selector(switchAimbot:) forControlEvents:UIControlEventValueChanged];
-    [contentView addSubview:aimSwitch];
-
-    UILabel *espLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 50, 120, 25)];
-    espLabel.text = @"ESP";
-    espLabel.textColor = UIColor.whiteColor;
-    [contentView addSubview:espLabel];
-
-    UISwitch *espSwitch = [[UISwitch alloc] initWithFrame:CGRectMake(150, 45, 0, 0)];
-    [espSwitch addTarget:nil action:@selector(switchESP:) forControlEvents:UIControlEventValueChanged];
-    [contentView addSubview:espSwitch];
-
-    UIPanGestureRecognizer *pan =
-    [[UIPanGestureRecognizer alloc] initWithTarget:nil action:@selector(handleDrag:)];
-    [view addGestureRecognizer:pan];
-
-    return view;
-}
-
-UIButton *createButton() {
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    btn.frame = CGRectMake(20, 200, 55, 55);
-    btn.layer.cornerRadius = 27.5;
-    btn.backgroundColor = UIColor.systemBlueColor;
-    [btn setTitle:@"MK" forState:UIControlStateNormal];
-    [btn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
-    [btn addTarget:nil action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
-
-    UIPanGestureRecognizer *pan =
-    [[UIPanGestureRecognizer alloc] initWithTarget:nil action:@selector(handleDrag:)];
-    [btn addGestureRecognizer:pan];
-
-    return btn;
-}
-
-%hook UIApplication
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
-    BOOL ret = %orig;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC),
-    dispatch_get_main_queue(), ^{
-        UIWindow *window = getKeyWindow();
         if (!window) return;
 
-        menuView = createMenu();
-        menuButton = createButton();
-
-        [window addSubview:menuView];
-        [window addSubview:menuButton];
+        MKMenuView *menu = [[MKMenuView alloc] init];
+        [window addSubview:menu];
     });
-
-    return ret;
 }
-%end
