@@ -1,49 +1,7 @@
-name: Build MKFEKBKJCKEHook dylib
-
-on:
-  push:
-    branches: ["main", "master"]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: macos-latest
-
-    steps:
-    # 1️⃣ Checkout del repositorio
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    # 2️⃣ Instalar Homebrew y ldid (necesario para firmar dylibs)
-    - name: Install ldid
-      run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-        brew install ldid
-        export PATH="/opt/homebrew/bin:$PATH"
-
-    # 3️⃣ Instalar Theos
-    - name: Install Theos
-      run: |
-        git clone --branch master https://github.com/theos/theos.git $HOME/theos
-        export THEOS=$HOME/theos
-        $THEOS/bin/update-theos
-
-    # 4️⃣ Build dylib ignorando warnings que detienen la compilación
-    - name: Build dylib
-      run: |
-        export THEOS=$HOME/theos
-        cd $GITHUB_WORKSPACE
-        make clean
-        export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla"
-        make
-
-    # 5️⃣ Subir el dylib como artifact
-    - name: Upload dylib artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MKFEKBKJCKEHook-dylib
-        path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
-        if-no-files-found: warn
-        compression-level: 6
-        overwrite: true
+- name: Build dylib
+  run: |
+    export THEOS=$HOME/theos
+    cd $GITHUB_WORKSPACE
+    make clean
+    export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla"
+    make
