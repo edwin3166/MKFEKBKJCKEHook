@@ -6,17 +6,17 @@ static UIButton *aimKillButton = nil;
 
 CHDeclareClass(UIApplication)
 
-// Hook del método didFinishLaunchingWithOptions:
+// Hook a didFinishLaunchingWithOptions
 CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
-    // Capturamos la primera escena que sea UIWindowScene
+    // Obtenemos la primera escena
     UIScene *firstScene = [UIApplication sharedApplication].connectedScenes.anyObject;
     if ([firstScene isKindOfClass:[UIWindowScene class]]) {
         UIWindowScene *windowScene = (UIWindowScene *)firstScene;
         UIWindow *window = windowScene.windows.firstObject;
 
-        // Creamos el botón AimKill
+        // Crear botón toggle AimKill
         aimKillButton = [UIButton buttonWithType:UIButtonTypeCustom];
         aimKillButton.frame = CGRectMake(20, 50, 120, 40);
         [aimKillButton setTitle:@"AimKill ON" forState:UIControlStateNormal];
@@ -29,7 +29,7 @@ CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSD
     return result;
 }
 
-// Método toggle AimKill
+// Método toggle
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     aimKillEnabled = !aimKillEnabled;
 
@@ -38,14 +38,12 @@ CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
 
     NSLog(@"[MKFEKBKJCKEHook] AimKill %@", aimKillEnabled ? @"activado" : @"desactivado");
 
-    // Aquí se pondría la lógica real del AimKill
+    // Aquí iría la lógica real del AimKill
 }
 
-// Constructor que registra los hooks
+// Constructor: registra hooks
 CHConstructor {
     CHLoadLateClass(UIApplication);
-
-    // Registrar los métodos
-    CHHook(UIApplication, didFinishLaunchingWithOptions);
-    CHHook(UIApplication, toggleAimKill:);
+    CHClassHook(UIApplication, didFinishLaunchingWithOptions);
+    CHClassHook(UIApplication, toggleAimKill:);
 }
