@@ -14,23 +14,44 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # ----------------------------------
+    # 1️⃣ Instalar Perl completo
+    # ----------------------------------
+    - name: Install Perl
+      run: |
+        brew install perl
+        export PATH="/usr/local/opt/perl/bin:$PATH"
+        echo 'PATH="/usr/local/opt/perl/bin:$PATH"' >> $GITHUB_ENV
+
+    # ----------------------------------
+    # 2️⃣ Instalar Theos y bootstrap
+    # ----------------------------------
     - name: Install Theos
       run: |
-        echo "Instalando Theos..."
         git clone --branch master https://github.com/theos/theos.git $HOME/theos
         export THEOS=$HOME/theos
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+        $THEOS/bin/bootstrap.sh  # Asegura que todos los scripts Perl estén presentes
         sudo xcode-select -s /Applications/Xcode_16.4.app
 
+    # ----------------------------------
+    # 3️⃣ Instalar ldid
+    # ----------------------------------
     - name: Install ldid
       run: |
         brew install ldid
 
+    # ----------------------------------
+    # 4️⃣ Verificar Theos
+    # ----------------------------------
     - name: Verify Theos
       run: |
         echo "THEOS is at $THEOS"
         ls $THEOS
 
+    # ----------------------------------
+    # 5️⃣ Build Tweak
+    # ----------------------------------
     - name: Build Tweak
       env:
         THEOS: ${{ env.THEOS }}
@@ -39,6 +60,9 @@ jobs:
         make clean
         make package
 
+    # ----------------------------------
+    # 6️⃣ Subir dylib como artifact
+    # ----------------------------------
     - name: Upload dylib artifact
       uses: actions/upload-artifact@v4
       with:
