@@ -10,17 +10,26 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
+      # 1️⃣ Traer tu repo
       - name: Checkout
         uses: actions/checkout@v3
 
+      # 2️⃣ Instalar Homebrew (si no está)
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "Homebrew ya instalado"
+
+      # 3️⃣ Instalar ldid para firmar tweaks
+      - name: Install ldid
+        run: |
+          brew install ldid
+
+      # 4️⃣ Instalar Theos
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Install Toolchain
-        run: |
-          echo "Skipping iphoneos-deploy.pkg installation, not needed on GitHub Actions"
-
+      # 5️⃣ Build Tweak
       - name: Build Tweak
         run: |
           cd $GITHUB_WORKSPACE
