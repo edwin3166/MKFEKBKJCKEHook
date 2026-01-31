@@ -1,29 +1,57 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 
-static BOOL aimbotEnabled = NO;
-static BOOL espEnabled = NO;
+CHDeclareClass(UIApplication)
 
-// Ejemplo: toggle Aimbot
-CHDeclareMethod1(void, UIButton, toggleAimbot:, UIButton *sender) {
-    aimbotEnabled = !aimbotEnabled;
-    NSString *title = aimbotEnabled ? @"Aimbot ON" : @"Aimbot OFF";
-    [sender setTitle:title forState:UIControlStateNormal];
+static BOOL executorVisible = NO;
+static UIView *executorView = nil;
+static UITextView *scriptBox = nil;
+static UIButton *executeButton = nil;
+
+// Hook al didFinishLaunchingWithOptions para agregar GUI
+CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary*, options) {
+    BOOL ret = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
+
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+
+    // Crear GUI executor
+    executorView = [[UIView alloc] initWithFrame:CGRectMake(50, 100, 300, 400)];
+    executorView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.8];
+    executorView.hidden = YES;
+    executorView.layer.cornerRadius = 10;
+    
+    scriptBox = [[UITextView alloc] initWithFrame:CGRectMake(10, 10, 280, 300)];
+    scriptBox.backgroundColor = [UIColor darkGrayColor];
+    scriptBox.textColor = [UIColor whiteColor];
+    [executorView addSubview:scriptBox];
+
+    executeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    executeButton.frame = CGRectMake(10, 320, 280, 50);
+    [executeButton setTitle:@"Ejecutar Lua" forState:UIControlStateNormal];
+    [executeButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    executeButton.backgroundColor = [UIColor systemBlueColor];
+    executeButton.layer.cornerRadius = 8;
+    
+    [executeButton addTarget:nil action:@selector(runLuaScript) forControlEvents:UIControlEventTouchUpInside];
+    [executorView addSubview:executeButton];
+
+    [window addSubview:executorView];
+
+    return ret;
 }
 
-// Ejemplo: toggle ESP
-CHDeclareMethod1(void, UIButton, toggleESP:, UIButton *sender) {
-    espEnabled = !espEnabled;
-    NSString *title = espEnabled ? @"ESP ON" : @"ESP OFF";
-    [sender setTitle:title forState:UIControlStateNormal];
+// Método toggle visible/invisible
+CHDeclareMethod0(void, UIApplication, toggleExecutor) {
+    executorVisible = !executorVisible;
+    executorView.hidden = !executorVisible;
 }
 
-// Hook didFinishLaunching
-CHOptimizedMethod1(0, BOOL, UIApplication, application, didFinishLaunchingWithOptions, NSDictionary *, options) {
-    BOOL result = CHSuper1(UIApplication, application, didFinishLaunchingWithOptions, options);
-
-    // Aquí tu función para mostrar panel
-    // showMKPanel(self);
-
-    return result;
+// Método para ejecutar Lua
+CHDeclareMethod0(void, UIApplication, runLuaScript) {
+    NSString *luaCode = scriptBox.text;
+    if(luaCode.length > 0) {
+        // Aquí es donde se evaluaría Lua dentro del cliente
+        // En este ejemplo solo imprime el script
+        NSLog(@"[Lua Executor] %@", luaCode);
+    }
 }
