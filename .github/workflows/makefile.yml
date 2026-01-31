@@ -10,29 +10,38 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      # 1️⃣ Traer tu repo
       - name: Checkout
         uses: actions/checkout@v3
 
-      # 2️⃣ Instalar Homebrew (si no está)
       - name: Install Homebrew
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "Homebrew ya instalado"
 
-      # 3️⃣ Instalar ldid para firmar tweaks
       - name: Install ldid
         run: |
           brew install ldid
 
-      # 4️⃣ Instalar Theos
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      # 5️⃣ Build Tweak
       - name: Build Tweak
         run: |
           cd $GITHUB_WORKSPACE
           make package
         env:
           THEOS: $HOME/theos
+
+      # Subir el dylib como artifact
+      - name: Upload dylib
+        uses: actions/upload-artifact@v3
+        with:
+          name: MKFEKBKJCKEHook-dylib
+          path: .theos/obj/debug/MKFEKBKJCKEHook.dylib
+
+      # Subir el deb (opcional)
+      - name: Upload deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: MKFEKBKJCKEHook-deb
+          path: packages/*.deb
