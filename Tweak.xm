@@ -29,7 +29,7 @@ CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSD
     return result;
 }
 
-// Método custom toggle AimKill:
+// Método toggle AimKill
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     aimKillEnabled = !aimKillEnabled;
 
@@ -38,15 +38,14 @@ CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
 
     NSLog(@"[MKFEKBKJCKEHook] AimKill %@", aimKillEnabled ? @"activado" : @"desactivado");
 
-    // Aquí puedes activar/desactivar tu lógica de AimKill real
-    // if (aimKillEnabled) { ... }
+    // Aquí se pondría la lógica real del AimKill
 }
 
-// Constructor para registrar hooks
+// Constructor que registra los hooks
 CHConstructor {
     CHLoadLateClass(UIApplication);
 
-    // Registrar hooks correctamente
-    CHClassHook(UIApplication, didFinishLaunchingWithOptions:);
-    CHClassHook(UIApplication, toggleAimKill:);
+    // Registrar los métodos
+    CHHook(UIApplication, didFinishLaunchingWithOptions);
+    CHHook(UIApplication, toggleAimKill:);
 }
