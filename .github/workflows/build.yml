@@ -2,7 +2,7 @@ name: Build MKFEKBKJCKEHook dylib
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   workflow_dispatch:
 
 jobs:
@@ -18,9 +18,9 @@ jobs:
     - name: Install ldid
       run: |
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
         eval "$(/opt/homebrew/bin/brew shellenv)"
         brew install ldid
-        export PATH="/opt/homebrew/bin:$PATH"
 
     # 3️⃣ Instalar Theos
     - name: Install Theos
@@ -29,16 +29,16 @@ jobs:
         export THEOS=$HOME/theos
         $THEOS/bin/update-theos
 
-    # 4️⃣ Build dylib ignorando warnings
+    # 4️⃣ Configurar el entorno Theos y compilación
     - name: Build dylib
       run: |
         export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
-        # Limpieza
         make clean
-        # Build ignorando warnings que causaban abort
-        export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla"
-        make
+        # Evitar que warnings aborten la compilación
+        export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla -Wno-error=unused-function -Wno-error=deprecated-declarations"
+        # Compilar el tweak
+        make package
 
     # 5️⃣ Subir dylib como artifact
     - name: Upload dylib artifact
@@ -46,3 +46,4 @@ jobs:
       with:
         name: MKFEKBKJCKEHook-dylib
         path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
+        if-no-files-found: warn
