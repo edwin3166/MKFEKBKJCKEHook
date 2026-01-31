@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    # 1️⃣ Checkout del repo
+    # 1️⃣ Clonar el repo
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -29,21 +29,22 @@ jobs:
         export THEOS=$HOME/theos
         $THEOS/bin/update-theos
 
-    # 4️⃣ Build dylib
+    # 4️⃣ Build dylib (mostrando errores)
     - name: Build dylib
       run: |
         export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
         make clean
+        # Compilar con warnings desactivados
         export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla"
-        make
+        set -o pipefail
+        make | tee build.log
 
-    # 5️⃣ Subir dylib como artifact
+    # 5️⃣ Subir dylib solo si existe
     - name: Upload dylib artifact
+      if: success() && steps.build.outcome == 'success'
       uses: actions/upload-artifact@v4
       with:
         name: MKFEKBKJCKEHook-dylib
         path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
-        if-no-files-found: warn
-        compression-level: 6
-        overwrite: true
+        if-no-files-found: error
