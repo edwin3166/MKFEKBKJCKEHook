@@ -6,6 +6,7 @@ static UIButton *aimKillButton = nil;
 
 CHDeclareClass(UIApplication)
 
+// Hook del método didFinishLaunchingWithOptions:
 CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
     BOOL result = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
 
@@ -28,7 +29,7 @@ CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSD
     return result;
 }
 
-// Método del toggle
+// Método custom toggle AimKill:
 CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
     aimKillEnabled = !aimKillEnabled;
 
@@ -37,12 +38,15 @@ CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
 
     NSLog(@"[MKFEKBKJCKEHook] AimKill %@", aimKillEnabled ? @"activado" : @"desactivado");
 
-    // Aquí puedes llamar tu función de AimKill real:
-    // if (aimKillEnabled) { ... lógica de apuntado automático ... }
+    // Aquí puedes activar/desactivar tu lógica de AimKill real
+    // if (aimKillEnabled) { ... }
 }
 
+// Constructor para registrar hooks
 CHConstructor {
     CHLoadLateClass(UIApplication);
-    CHClassHook(UIApplication, didFinishLaunchingWithOptions);
+
+    // Registrar hooks correctamente
+    CHClassHook(UIApplication, didFinishLaunchingWithOptions:);
     CHClassHook(UIApplication, toggleAimKill:);
 }
