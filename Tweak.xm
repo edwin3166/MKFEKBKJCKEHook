@@ -1,42 +1,30 @@
-// Tweak.xm
 #import <UIKit/UIKit.h>
+#import <CaptainHook/CaptainHook.h>
 
-// Variables globales para controlar los toggles
+// Variables globales
 static BOOL aimbotEnabled = NO;
 static BOOL espEnabled = NO;
 
-// Hook principal de la app
-%hook UIApplication
-
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    BOOL result = %orig;
-
-    // Aquí podrías inicializar tu panel
-    NSLog(@"[MKFEKBKJCKEHook] App launched - Panel ready");
-
-    return result;
-}
-
-%end
-
-// Hooks para botones
-@interface UIButton (MKHooks)
-@end
-
-@implementation UIButton (MKHooks)
-
-- (void)toggleAimbot {
+// Funciones helper para toggles
+void toggleAimbot(UIButton *sender) {
     aimbotEnabled = !aimbotEnabled;
     NSString *title = aimbotEnabled ? @"Aimbot ON" : @"Aimbot OFF";
-    [self setTitle:title forState:UIControlStateNormal];
-    NSLog(@"[MKFEKBKJCKEHook] Aimbot is now %@", aimbotEnabled ? @"ON" : @"OFF");
+    [sender setTitle:title forState:UIControlStateNormal];
 }
 
-- (void)toggleESP {
+void toggleESP(UIButton *sender) {
     espEnabled = !espEnabled;
     NSString *title = espEnabled ? @"ESP ON" : @"ESP OFF";
-    [self setTitle:title forState:UIControlStateNormal];
-    NSLog(@"[MKFEKBKJCKEHook] ESP is now %@", espEnabled ? @"ON" : @"OFF");
+    [sender setTitle:title forState:UIControlStateNormal];
 }
 
-@end
+// Hook del UIApplication
+CHOptimizedMethod1(self, BOOL, UIApplication, application, didFinishLaunchingWithOptions, NSDictionary *, options) {
+    // Llamamos al método original
+    CHSuper1(UIApplication, application, didFinishLaunchingWithOptions, options);
+
+    // Aquí se puede inicializar tu panel o botones
+    NSLog(@"[MKFEKBKJCKEHook] App launched - panel ready!");
+
+    return YES;
+}
