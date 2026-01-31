@@ -1,5 +1,5 @@
-#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
 #import <CaptainHook/CaptainHook.h>
 
 // --------------------------
@@ -7,7 +7,6 @@
 // --------------------------
 static BOOL AimKillEnabled = YES;
 
-// Funciones para encender/apagar AimKill
 void setAimKillEnabled(BOOL enabled) {
     AimKillEnabled = enabled;
 }
@@ -32,7 +31,7 @@ BOOL isAimKillEnabled() {
 @property (nonatomic) float PCBKGKIIDKO;
 @property (nonatomic) float GFPECMNILBK;
 
-- (void)UpdateAimKill; // Función que ejecuta el AimKill
+- (void)UpdateAimKill;
 @end
 
 @implementation MKFEKBKJCKE
@@ -40,7 +39,6 @@ BOOL isAimKillEnabled() {
 - (instancetype)init {
     self = [super init];
     if (self) {
-        // Inicialización original
         _AHFNKDJFBEA = 0;
         _BOJDJLMBIMB = 0;
         _GFPPJCPHMHE = 0;
@@ -56,19 +54,15 @@ BOOL isAimKillEnabled() {
     return self;
 }
 
-// --------------------------
-// Método con toggle
-// --------------------------
 - (void)UpdateAimKill {
     if (!isAimKillEnabled()) {
-        NSLog(@"[AimKill] Desactivado, no se ejecuta");
-        return; // Si toggle está apagado, no hace nada
+        NSLog(@"[AimKill] Desactivado");
+        return;
     }
 
     // --------------------------
-    // Código original del AimKill
+    // Aquí va tu código original de AimKill
     // --------------------------
-    // Ejemplo: reemplaza con tu lógica real
     _HDLKIEHBAKG += 1.0f;
     _HJMDIBKNPLO += 2.0f;
     _CNNNMCAMAEM += 3.0f;
@@ -81,26 +75,46 @@ BOOL isAimKillEnabled() {
 @end
 
 // --------------------------
-// Ejemplo de uso: toggle
+// Toggle flotante en pantalla
+// --------------------------
+CHDeclareClass(UIApplication)
+
+CHOptimizedMethod0(self, void, UIApplication, didFinishLaunchingWithOptions, NSDictionary *, options) {
+
+    CHSuper0(UIApplication, didFinishLaunchingWithOptions, options);
+
+    // Crear botón flotante
+    UIButton *aimkillButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    aimkillButton.frame = CGRectMake(20, 100, 140, 40);
+    [aimkillButton setTitle:@"AimKill ON" forState:UIControlStateNormal];
+    aimkillButton.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+    aimkillButton.layer.cornerRadius = 8;
+
+    [aimkillButton addTarget:[UIApplication sharedApplication] action:@selector(toggleAimKill:) forControlEvents:UIControlEventTouchUpInside];
+
+    // Añadir al keyWindow
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[UIApplication sharedApplication].keyWindow addSubview:aimkillButton];
+    });
+}
+
+// Método para el toggle
+CHDeclareMethod1(void, UIApplication, toggleAimKill, UIButton*, sender) {
+    AimKillEnabled = !AimKillEnabled;
+    NSString *title = AimKillEnabled ? @"AimKill ON" : @"AimKill OFF";
+    [sender setTitle:title forState:UIControlStateNormal];
+    NSLog(@"[AimKill] Toggle: %@", AimKillEnabled ? @"ON" : @"OFF");
+}
+
+// --------------------------
+// Constructor del tweak
 // --------------------------
 CHConstructor {
     NSLog(@"[MKFEKBKJCKEHook] Tweak cargado");
 
-    // Crear instancia para pruebas
+    // Instancia de prueba para UpdateAimKill
     MKFEKBKJCKE *aimkill = [[MKFEKBKJCKE alloc] init];
-
-    // Ejecutar AimKill
     [aimkill UpdateAimKill];
 
-    // Apagar AimKill después de 5 segundos (solo ejemplo)
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        setAimKillEnabled(NO);
-        NSLog(@"[AimKill] Toggle: apagado");
-    });
-
-    // Volver a encender después de 10 segundos
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        setAimKillEnabled(YES);
-        NSLog(@"[AimKill] Toggle: encendido");
-    });
+    // Puedes llamar UpdateAimKill periódicamente o dentro del hook de Free Fire
 }
