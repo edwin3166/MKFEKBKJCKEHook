@@ -1,54 +1,53 @@
-name: Build MKFEKBKJCKEHook
+name: Build iOS Tweak
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
+  build-tweak:
     runs-on: macos-latest
-
-    env:
-      THEOS: ${{ github.workspace }}/theos
-
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
+      # 1️⃣ Clonar el repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install Homebrew and ldid
-      run: |
-        # Instalar Homebrew si no existe
-        if ! command -v brew &>/dev/null; then
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        fi
+      # 2️⃣ Instalar Homebrew si no existe
+      - name: Install Homebrew
+        run: |
+          if ! command -v brew >/dev/null 2>&1; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          fi
 
-        # Agregar Homebrew al PATH
-        eval "$(/opt/homebrew/bin/brew shellenv || true)"
-        eval "$(/usr/local/bin/brew shellenv || true)"
+      # 3️⃣ Instalar ldid
+      - name: Install ldid
+        run: brew install ldid
 
-        # Instalar ldid si no existe
-        if ! command -v ldid &>/dev/null; then
-          brew install ldid
-        fi
+      # 4️⃣ Clonar Theos
+      - name: Install Theos
+        run: |
+          git clone --branch master https://github.com/theos/theos.git $HOME/theos
+          export THEOS=$HOME/theos
+          $THEOS/bin/update-theos
 
-    - name: Install Theos
-      run: |
-        if [ ! -d "$THEOS" ]; then
-          git clone --branch master https://github.com/theos/theos.git $THEOS
-        fi
-        $THEOS/bin/update-theos
+      # 5️⃣ Definir variable THEOS para el runner
+      - name: Set THEOS environment
+        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
-    - name: Build tweak
-      run: |
-        export THEOS=$HOME/theos
-        export PATH=$PATH:/opt/homebrew/bin:/usr/local/bin   # <- Aseguramos que ldid esté disponible
-        cd $GITHUB_WORKSPACE
-        make clean
-        make
+      # 6️⃣ Compilar el tweak
+      - name: Build tweak
+        run: |
+          cd $GITHUB_WORKSPACE
+          make clean
+          make
 
-    - name: Upload dylib artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MKFEKBKJCKEHook.dylib
-        path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
+      # 7️⃣ Subir el .dylib compilado como artifact
+      - name: Upload compiled dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: MKFEKBKJCKEHook-dylib
+          path: $GITHUB_WORKSPACE/.theos/obj/debug/*.dylib
