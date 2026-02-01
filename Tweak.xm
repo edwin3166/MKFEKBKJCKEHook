@@ -1,127 +1,67 @@
 #import <UIKit/UIKit.h>
 
-static UIView *executorView = nil;
-static UIButton *floatingButton = nil;
-static BOOL guiVisible = NO;
-static BOOL injected = NO;
+@interface RBLXRootViewController : UIViewController
+@end
 
-UIWindow *GetMainWindow() {
-    for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-        if (scene.activationState == UISceneActivationStateForegroundActive) {
-            for (UIWindow *window in scene.windows) {
-                if (window.isKeyWindow) {
-                    return window;
-                }
-            }
-        }
-    }
-    return nil;
-}
+static UIView *rbxGUI = nil;
 
-void ToggleExecutor() {
-    if (!executorView) return;
-    guiVisible = !guiVisible;
-    executorView.hidden = !guiVisible;
-}
+static void showRobloxGUI() {
+    if (rbxGUI) return;
 
-void CreateExecutorGUI() {
-    if (executorView) return;
+    UIWindow *keyWindow = UIApplication.sharedApplication.keyWindow;
+    if (!keyWindow) return;
 
-    UIWindow *window = GetMainWindow();
-    if (!window) return;
+    CGFloat width = 260;
+    CGFloat height = 160;
 
-    executorView = [[UIView alloc] initWithFrame:CGRectMake(40, 120, 260, 160)];
-    executorView.backgroundColor = [UIColor colorWithWhite:0.08 alpha:0.95];
-    executorView.layer.cornerRadius = 18;
-    executorView.layer.zPosition = 9999;
-    executorView.hidden = YES;
+    rbxGUI = [[UIView alloc] initWithFrame:CGRectMake(
+        (keyWindow.bounds.size.width - width) / 2,
+        100,
+        width,
+        height
+    )];
 
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 260, 24)];
-    title.text = @"Lua Executor";
-    title.textAlignment = NSTextAlignmentCenter;
+    rbxGUI.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
+    rbxGUI.layer.cornerRadius = 14;
+    rbxGUI.layer.borderWidth = 1.5;
+    rbxGUI.layer.borderColor = UIColor.whiteColor.CGColor;
+
+    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, width, 30)];
+    title.text = @"Roblox Executor";
     title.textColor = UIColor.whiteColor;
-    title.font = [UIFont boldSystemFontOfSize:16];
-    [executorView addSubview:title];
+    title.textAlignment = NSTextAlignmentCenter;
+    title.font = [UIFont boldSystemFontOfSize:18];
+    [rbxGUI addSubview:title];
 
-    UILabel *info = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, 240, 80)];
-    info.text = @"Aquí va tu executor\n(conecta Lua después)";
+    UIButton *close = [UIButton buttonWithType:UIButtonTypeSystem];
+    close.frame = CGRectMake(width - 40, 5, 35, 35);
+    [close setTitle:@"✕" forState:UIControlStateNormal];
+    close.tintColor = UIColor.redColor;
+    [close addTarget:nil action:@selector(removeFromSuperview) forControlEvents:UIControlEventTouchUpInside];
+    [rbxGUI addSubview:close];
+
+    UILabel *info = [[UILabel alloc] initWithFrame:CGRectMake(10, 60, width - 20, 80)];
+    info.text = @"GUI activo\n(Executor base)";
+    info.textColor = UIColor.whiteColor;
     info.textAlignment = NSTextAlignmentCenter;
-    info.numberOfLines = 0;
-    info.textColor = UIColor.lightGrayColor;
-    info.font = [UIFont systemFontOfSize:13];
-    [executorView addSubview:info];
+    info.numberOfLines = 2;
+    info.font = [UIFont systemFontOfSize:15];
+    [rbxGUI addSubview:info];
 
-    [window addSubview:executorView];
+    [keyWindow addSubview:rbxGUI];
 }
 
-void CreateFloatingButton() {
-    if (floatingButton) return;
+%hook RBLXRootViewController
 
-    UIWindow *window = GetMainWindow();
-    if (!window) return;
-
-    floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    floatingButton.frame = CGRectMake(20, 300, 56, 56);
-    floatingButton.layer.cornerRadius = 28;
-    floatingButton.layer.zPosition = 10000;
-    floatingButton.backgroundColor = [UIColor colorWithRed:0.2 green:0.6 blue:1 alpha:1];
-
-    [floatingButton setTitle:@"≡" forState:UIControlStateNormal];
-    floatingButton.titleLabel.font = [UIFont boldSystemFontOfSize:28];
-
-    [floatingButton addTarget:nil
-                       action:@selector(toggleExecutorAction)
-             forControlEvents:UIControlEventTouchUpInside];
-
-    UIPanGestureRecognizer *pan =
-        [[UIPanGestureRecognizer alloc] initWithTarget:nil
-                                                action:@selector(dragButton:)];
-    [floatingButton addGestureRecognizer:pan];
-
-    [window addSubview:floatingButton];
-}
-
-@interface UIApplication (Executor)
-- (void)toggleExecutorAction;
-- (void)dragButton:(UIPanGestureRecognizer *)gesture;
-@end
-
-@implementation UIApplication (Executor)
-
-- (void)toggleExecutorAction {
-    ToggleExecutor();
-}
-
-- (void)dragButton:(UIPanGestureRecognizer *)gesture {
-    UIView *view = gesture.view;
-    CGPoint translation = [gesture translationInView:view.superview];
-    view.center = CGPointMake(view.center.x + translation.x,
-                              view.center.y + translation.y);
-    [gesture setTranslation:CGPointZero inView:view.superview];
-}
-
-@end
-
-void InjectGUI() {
-    if (injected) return;
-    injected = YES;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(), ^{
-        CreateExecutorGUI();
-        CreateFloatingButton();
-    });
-}
-
-%hook UIApplication
-
-- (void)applicationDidBecomeActive:(UIApplication *)application {
+- (void)viewDidAppear:(BOOL)animated {
     %orig;
 
-    NSString *bundleID = NSBundle.mainBundle.bundleIdentifier;
-    if ([bundleID isEqualToString:@"com.apple.springboard"]) return;
-
-    InjectGUI();
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            showRobloxGUI();
+        });
+    });
 }
 
 %end
