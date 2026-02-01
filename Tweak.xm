@@ -1,45 +1,44 @@
 #import <UIKit/UIKit.h>
 
-// MARK: - Helpers static UIWindow *GetActiveWindow(void) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:UIWindowScene.class]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } return ws.windows.firstObject; } } return nil; }
+static BOOL executorEnabled = NO; static UIView *executorView = nil;
 
-// MARK: - Simple iOS 26 style overlay @interface MKExecutorView : UIView @property (nonatomic, strong) UITextView *editor; @end
+static UIWindow *GetKeyWindow(void) { if (@available(iOS 13.0, *)) { for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) { for (UIWindow *window in ((UIWindowScene *)scene).windows) { if (window.isKeyWindow) return window; } } } } return [UIApplication sharedApplication].keyWindow; }
 
-@implementation MKExecutorView
+static void ToggleExecutor(void) { UIWindow *keyWindow = GetKeyWindow(); if (!keyWindow) return;
 
-(instancetype)initWithFrame:(CGRect)frame { if ((self = [super initWithFrame:frame])) { self.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12]; self.layer.cornerRadius = 22; self.layer.masksToBounds = YES; self.layer.borderWidth = 0.5; self.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.25].CGColor;
+executorEnabled = !executorEnabled;
 
-UIBlurEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterial];
-  UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
-  blurView.frame = self.bounds;
-  blurView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  [self addSubview:blurView];
+if (executorEnabled) {
+    if (!executorView) {
+        UIVisualEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterialDark];
+        UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
+        blurView.frame = CGRectMake(40, 120, keyWindow.bounds.size.width - 80, 260);
+        blurView.layer.cornerRadius = 24;
+        blurView.clipsToBounds = YES;
 
-  _editor = [[UITextView alloc] initWithFrame:CGRectInset(self.bounds, 12, 12)];
-  _editor.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  _editor.backgroundColor = UIColor.clearColor;
-  _editor.textColor = UIColor.labelColor;
-  _editor.font = [UIFont monospacedSystemFontOfSize:14 weight:UIFontWeightRegular];
-  _editor.text = @"-- Lua executor (placeholder)\nprint(\"Hello iOS 26\")";
-  [self addSubview:_editor];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 20, blurView.bounds.size.width, 30)];
+        label.text = @"Lua Executor (iOS 26)";
+        label.textAlignment = NSTextAlignmentCenter;
+        label.textColor = [UIColor whiteColor];
+        label.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
 
-} return self; } @end
+        [blurView.contentView addSubview:label];
+        executorView = blurView;
+    }
+    [keyWindow addSubview:executorView];
+} else {
+    [executorView removeFromSuperview];
+}
 
+}
 
-// MARK: - Logos Hook (NO CaptainHook) %hook UIApplication
+%hook UIApplication
 
-(void)toggleExecutor { UIWindow *window = GetActiveWindow(); if (!window) return;
+(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options { BOOL ret = %orig;
 
-UIView *existing = [window viewWithTag:0xBEEF]; if (existing) { [existing removeFromSuperview]; return; }
+dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ ToggleExecutor(); });
 
-CGFloat w = MIN(window.bounds.size.width - 24, 360); CGFloat h = MIN(window.bounds.size.height - 24, 420); CGRect frame = CGRectMake((window.bounds.size.width - w)/2.0, (window.bounds.size.height - h)/2.0, w, h);
-
-MKExecutorView *panel = [[MKExecutorView alloc] initWithFrame:frame]; panel.tag = 0xBEEF;
-
-// Shadow panel.layer.shadowColor = UIColor.blackColor.CGColor; panel.layer.shadowOpacity = 0.25; panel.layer.shadowRadius = 24; panel.layer.shadowOffset = CGSizeMake(0, 12);
-
-[window addSubview:panel]; }
-
-(void)runLuaScript { // Placeholder: integrate your Lua VM / bridge here }
+return ret; }
 
 
 %end
