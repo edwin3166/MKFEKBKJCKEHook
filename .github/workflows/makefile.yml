@@ -9,19 +9,15 @@ jobs:
   build-dylib:
     runs-on: macos-latest
 
-    env:
-      THEOS: ${{ runner.home }}/theos
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Install essential tools
         run: |
-          # Actualizamos brew si existe, sino lo instalamos
+          # Instalar brew si no existe
           if ! command -v brew &> /dev/null; then
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            echo 'PATH=/opt/homebrew/bin:$PATH' >> $GITHUB_ENV
           fi
           echo 'PATH=/opt/homebrew/bin:$PATH' >> $GITHUB_ENV
           brew update
@@ -29,6 +25,8 @@ jobs:
 
       - name: Install Theos
         run: |
+          export THEOS=$HOME/theos
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
           if [ ! -d "$THEOS" ]; then
             git clone --branch master https://github.com/theos/theos.git $THEOS
           fi
