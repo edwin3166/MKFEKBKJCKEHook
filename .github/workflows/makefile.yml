@@ -11,7 +11,7 @@ jobs:
 
     env:
       THEOS: $HOME/theos
-      PATH: $HOME/theos/bin:$PATH
+      PATH: $PATH:$HOME/theos/bin
 
     steps:
     - name: Checkout repo
@@ -29,7 +29,10 @@ jobs:
       run: brew install ldid
 
     - name: Install Theos
-      run: git clone --branch master https://github.com/theos/theos.git $HOME/theos
+      run: |
+        if [ ! -d "$HOME/theos" ]; then
+          git clone --branch master https://github.com/theos/theos.git $HOME/theos
+        fi
 
     - name: Build tweak
       run: |
