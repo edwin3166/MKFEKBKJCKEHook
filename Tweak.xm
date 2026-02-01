@@ -66,4 +66,4 @@ ffButton.layer.cornerRadius = 28;
 
 // Hook mínimo: solo para construir GUI cuando la app entra a foreground %hook UIApplication
 
-(void)applicationDidBecomeActive:(UIApplication *)application { %orig; // <-- %orig VÁLIDO (dentro de método hookeado) dispatch_async(dispatch_get_main_queue(), ^{ FFBuildGUI(); }); } %end
+(void)applicationDidBecomeActive:(UIApplication *)application { // %orig removed (no super call needed here) // <-- %orig VÁLIDO (dentro de método hookeado) dispatch_async(dispatch_get_main_queue(), ^{ FFBuildGUI(); }); } %end
