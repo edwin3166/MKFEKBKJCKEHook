@@ -1,53 +1,40 @@
-name: Build iOS Tweak
+name: Build MKFEKBKJCKEHook
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-tweak:
+  build:
     runs-on: macos-latest
+    env:
+      THEOS: ${{ runner.home }}/theos
+
     steps:
-      # 1️⃣ Clonar el repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Instalar Homebrew si no existe
-      - name: Install Homebrew
+      - name: Install dependencies
         run: |
-          if ! command -v brew >/dev/null 2>&1; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
-            eval "$(/opt/homebrew/bin/brew shellenv)"
+          # Instalar ldid para firmar dylibs
+          brew install ldid || true
+          # Crear carpeta THEOS si no existe
+          mkdir -p $THEOS
+          # Clonar Theos si no está
+          if [ ! -d "$THEOS" ]; then
+            git clone --branch master https://github.com/theos/theos.git $THEOS
           fi
 
-      # 3️⃣ Instalar ldid
-      - name: Install ldid
-        run: brew install ldid
-
-      # 4️⃣ Clonar Theos
-      - name: Install Theos
-        run: |
-          git clone --branch master https://github.com/theos/theos.git $HOME/theos
-          export THEOS=$HOME/theos
-          $THEOS/bin/update-theos
-
-      # 5️⃣ Definir variable THEOS para el runner
-      - name: Set THEOS environment
-        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-
-      # 6️⃣ Compilar el tweak
       - name: Build tweak
+        working-directory: ${{ github.workspace }}
         run: |
-          cd $GITHUB_WORKSPACE
+          export THEOS=$THEOS
           make clean
           make
 
-      # 7️⃣ Subir el .dylib compilado como artifact
-- name: Upload compiled dylib
-  uses: actions/upload-artifact@v4
-  with:
-    name: MKFEKBKJCKEHook-dylib
-    path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
+      - name: Upload dylib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MKFEKBKJCKEHook-dylib
+          path: "$GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib"
