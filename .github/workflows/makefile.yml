@@ -13,15 +13,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install Xcode Command Line Tools
+        run: |
+          if ! xcode-select -p &>/dev/null; then
+            sudo xcode-select --install
+          fi
+
       - name: Install essential tools
         run: |
-          # Instalar brew si no existe
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
-          echo 'PATH=/opt/homebrew/bin:$PATH' >> $GITHUB_ENV
           brew update
-          brew install ldid git curl
+          brew install make git ldid curl
 
       - name: Install Theos
         run: |
