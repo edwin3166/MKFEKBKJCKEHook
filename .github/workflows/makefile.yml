@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
 
     env:
-      PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/theos/bin
+      THEOS: ${{ github.workspace }}/theos
 
     steps:
     - name: Check out repository
@@ -23,19 +23,17 @@ jobs:
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         fi
 
-        # Agregar Homebrew al PATH en esta sesión
-        if [ -d "/opt/homebrew/bin" ]; then
-          eval "$(/opt/homebrew/bin/brew shellenv)"
-        elif [ -d "/usr/local/bin" ]; then
-          eval "$(/usr/local/bin/brew shellenv)"
-        fi
+        # Agregar Homebrew al PATH
+        eval "$(/opt/homebrew/bin/brew shellenv || true)"
+        eval "$(/usr/local/bin/brew shellenv || true)"
 
-        # Instalar ldid
-        brew install ldid
+        # Instalar ldid si no existe
+        if ! command -v ldid &>/dev/null; then
+          brew install ldid
+        fi
 
     - name: Install Theos
       run: |
-        export THEOS=$HOME/theos   # <- Definir THEOS aquí
         if [ ! -d "$THEOS" ]; then
           git clone --branch master https://github.com/theos/theos.git $THEOS
         fi
@@ -43,7 +41,8 @@ jobs:
 
     - name: Build tweak
       run: |
-        export THEOS=$HOME/theos   # <- También definir THEOS aquí
+        export THEOS=$HOME/theos
+        export PATH=$PATH:/opt/homebrew/bin:/usr/local/bin   # <- Aseguramos que ldid esté disponible
         cd $GITHUB_WORKSPACE
         make clean
         make
