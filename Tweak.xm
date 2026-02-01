@@ -1,77 +1,45 @@
 #import <UIKit/UIKit.h>
-#import <CaptainHook/CaptainHook.h>
 
-CHDeclareClass(UIApplication)
+// MARK: - Helpers static UIWindow *GetActiveWindow(void) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:UIWindowScene.class]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } return ws.windows.firstObject; } } return nil; }
 
-static BOOL executorVisible = NO;
-static UIView *executorView = nil;
-static UITextView *scriptBox = nil;
-static UIButton *executeButton = nil;
-static UIButton *toggleButton = nil;
+// MARK: - Simple iOS 26 style overlay @interface MKExecutorView : UIView @property (nonatomic, strong) UITextView *editor; @end
 
-CHOptimizedMethod1(self, BOOL, UIApplication, didFinishLaunchingWithOptions, NSDictionary*, options) {
-    BOOL ret = CHSuper1(UIApplication, didFinishLaunchingWithOptions, options);
+@implementation MKExecutorView
 
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+(instancetype)initWithFrame:(CGRect)frame { if ((self = [super initWithFrame:frame])) { self.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12]; self.layer.cornerRadius = 22; self.layer.masksToBounds = YES; self.layer.borderWidth = 0.5; self.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.25].CGColor;
 
-    // Botón flotante toggle
-    toggleButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    toggleButton.frame = CGRectMake(window.bounds.size.width - 70, 150, 60, 60);
-    toggleButton.layer.cornerRadius = 30;
-    toggleButton.backgroundColor = [[UIColor systemBlueColor] colorWithAlphaComponent:0.8];
-    [toggleButton setTitle:@"Lua" forState:UIControlStateNormal];
-    [toggleButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    toggleButton.layer.shadowColor = [UIColor blackColor].CGColor;
-    toggleButton.layer.shadowOpacity = 0.3;
-    toggleButton.layer.shadowOffset = CGSizeMake(0,4);
-    toggleButton.layer.shadowRadius = 6;
-    [toggleButton addTarget:nil action:@selector(toggleExecutor) forControlEvents:UIControlEventTouchUpInside];
-    [window addSubview:toggleButton];
+UIBlurEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterial];
+  UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
+  blurView.frame = self.bounds;
+  blurView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  [self addSubview:blurView];
 
-    // Vista del executor
-    executorView = [[UIView alloc] initWithFrame:CGRectMake(30, 120, window.bounds.size.width - 60, 400)];
-    executorView.backgroundColor = [[UIColor systemGray6Color] colorWithAlphaComponent:0.95];
-    executorView.layer.cornerRadius = 20;
-    executorView.layer.masksToBounds = YES;
-    executorView.hidden = YES;
+  _editor = [[UITextView alloc] initWithFrame:CGRectInset(self.bounds, 12, 12)];
+  _editor.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _editor.backgroundColor = UIColor.clearColor;
+  _editor.textColor = UIColor.labelColor;
+  _editor.font = [UIFont monospacedSystemFontOfSize:14 weight:UIFontWeightRegular];
+  _editor.text = @"-- Lua executor (placeholder)\nprint(\"Hello iOS 26\")";
+  [self addSubview:_editor];
 
-    // TextView para scripts
-    scriptBox = [[UITextView alloc] initWithFrame:CGRectMake(15, 15, executorView.frame.size.width - 30, 300)];
-    scriptBox.backgroundColor = [[UIColor systemGray5Color] colorWithAlphaComponent:0.8];
-    scriptBox.textColor = [UIColor labelColor];
-    scriptBox.layer.cornerRadius = 15;
-    scriptBox.text = @"-- Escribe tu script Lua aquí";
-    [executorView addSubview:scriptBox];
+} return self; } @end
 
-    // Botón ejecutar
-    executeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    executeButton.frame = CGRectMake(15, 325, executorView.frame.size.width - 30, 50);
-    executeButton.backgroundColor = [[UIColor systemGreenColor] colorWithAlphaComponent:0.9];
-    [executeButton setTitle:@"Ejecutar Lua" forState:UIControlStateNormal];
-    [executeButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    executeButton.layer.cornerRadius = 12;
-    [executeButton addTarget:nil action:@selector(runLuaScript) forControlEvents:UIControlEventTouchUpInside];
-    [executorView addSubview:executeButton];
 
-    [window addSubview:executorView];
+// MARK: - Logos Hook (NO CaptainHook) %hook UIApplication
 
-    return ret;
-}
+(void)toggleExecutor { UIWindow *window = GetActiveWindow(); if (!window) return;
 
-// Toggle para mostrar/ocultar executor
-CHDeclareMethod0(void, UIApplication, toggleExecutor) {
-    executorVisible = !executorVisible;
-    executorView.hidden = !executorVisible;
-}
+UIView *existing = [window viewWithTag:0xBEEF]; if (existing) { [existing removeFromSuperview]; return; }
 
-// Ejecutar Lua
-CHDeclareMethod0(void, UIApplication, runLuaScript) {
-    NSString *luaCode = scriptBox.text;
-    if(luaCode.length > 0) {
-        NSLog(@"[Lua Executor] %@", luaCode);
+CGFloat w = MIN(window.bounds.size.width - 24, 360); CGFloat h = MIN(window.bounds.size.height - 24, 420); CGRect frame = CGRectMake((window.bounds.size.width - w)/2.0, (window.bounds.size.height - h)/2.0, w, h);
 
-        // TODO: Integrar LuaJIT o motor Lua para ejecutar código real
-        // Ejemplo:
-        // luaL_dostring(L, [luaCode UTF8String]);
-    }
-}
+MKExecutorView *panel = [[MKExecutorView alloc] initWithFrame:frame]; panel.tag = 0xBEEF;
+
+// Shadow panel.layer.shadowColor = UIColor.blackColor.CGColor; panel.layer.shadowOpacity = 0.25; panel.layer.shadowRadius = 24; panel.layer.shadowOffset = CGSizeMake(0, 12);
+
+[window addSubview:panel]; }
+
+(void)runLuaScript { // Placeholder: integrate your Lua VM / bridge here }
+
+
+%end
