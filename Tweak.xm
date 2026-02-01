@@ -1,64 +1,69 @@
-// FFHook - TrollFools GUI Overlay (iOS 15+) // Target: Free Fire only
-
 #import <UIKit/UIKit.h>
 
-static BOOL ff_guiVisible = NO; static UIView *ff_panel = nil; static UIButton *ff_toggleBtn = nil;
+// ============================== //  FFHook – TrollFools compatible //  Sin %orig fuera de métodos //  iOS 15+ (UIWindowScene) // ==============================
 
-static UIWindow *FFGetActiveWindow(void) { if (@available(iOS 13.0, *)) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:UIWindowScene.class]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } if (ws.windows.count > 0) return ws.windows.firstObject; } } } return UIApplication.sharedApplication.delegate.window; }
+static UIWindow *FFGetKeyWindow(void) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } // fallback return ws.windows.firstObject; } } return nil; }
 
-static void FFBuildGUI(void) { UIWindow *window = FFGetActiveWindow(); if (!window) return;
+static UIView *ffPanel = nil; static UIButton *ffButton = nil; static BOOL ffVisible = NO;
 
-if (!ff_toggleBtn) {
-    ff_toggleBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    ff_toggleBtn.frame = CGRectMake(20, 120, 56, 56);
-    ff_toggleBtn.layer.cornerRadius = 28;
-    ff_toggleBtn.backgroundColor = [[UIColor systemBlueColor] colorWithAlphaComponent:0.85];
-    [ff_toggleBtn setTitle:@"FF" forState:UIControlStateNormal];
-    [ff_toggleBtn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
-    [ff_toggleBtn addTarget:nil action:@selector(ff_toggle) forControlEvents:UIControlEventTouchUpInside];
-    [window addSubview:ff_toggleBtn];
+static void FFBuildGUI(void) { if (ffPanel) return;
+
+UIWindow *keyWindow = FFGetKeyWindow();
+if (!keyWindow) return;
+
+// Panel
+ffPanel = [[UIView alloc] initWithFrame:CGRectMake(40, 120, 220, 160)];
+ffPanel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
+ffPanel.layer.cornerRadius = 16;
+ffPanel.hidden = YES;
+
+UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 220, 24)];
+title.text = @"FFHook";
+title.textAlignment = NSTextAlignmentCenter;
+title.textColor = UIColor.whiteColor;
+title.font = [UIFont boldSystemFontOfSize:18];
+[ffPanel addSubview:title];
+
+UISwitch *s1 = [[UISwitch alloc] initWithFrame:CGRectMake(20, 60, 0, 0)];
+[ffPanel addSubview:s1];
+
+UILabel *l1 = [[UILabel alloc] initWithFrame:CGRectMake(80, 60, 120, 30)];
+l1.text = @"Feature 1";
+l1.textColor = UIColor.whiteColor;
+[ffPanel addSubview:l1];
+
+UISwitch *s2 = [[UISwitch alloc] initWithFrame:CGRectMake(20, 100, 0, 0)];
+[ffPanel addSubview:s2];
+
+UILabel *l2 = [[UILabel alloc] initWithFrame:CGRectMake(80, 100, 120, 30)];
+l2.text = @"Feature 2";
+l2.textColor = UIColor.whiteColor;
+[ffPanel addSubview:l2];
+
+[keyWindow addSubview:ffPanel];
+
+// Botón flotante
+ffButton = [UIButton buttonWithType:UIButtonTypeSystem];
+ffButton.frame = CGRectMake(20, 300, 56, 56);
+ffButton.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.85];
+ffButton.layer.cornerRadius = 28;
+[ffButton setTitle:@"FF" forState:UIControlStateNormal];
+[ffButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+[ffButton addTarget:nil action:@selector(ff_toggle) forControlEvents:UIControlEventTouchUpInside];
+[keyWindow addSubview:ffButton];
+
 }
 
-if (!ff_panel) {
-    ff_panel = [[UIView alloc] initWithFrame:CGRectMake(20, 190, 260, 220)];
-    ff_panel.layer.cornerRadius = 16;
-    ff_panel.backgroundColor = [[UIColor systemBackgroundColor] colorWithAlphaComponent:0.92];
-    ff_panel.hidden = YES;
+// Método Objective‑C real (NO Logos) para evitar %orig @interface NSObject (FFActions)
 
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, 228, 28)];
-    title.text = @"FF Overlay";
-    title.font = [UIFont boldSystemFontOfSize:18];
-    [ff_panel addSubview:title];
-
-    UISwitch *sw1 = [[UISwitch alloc] initWithFrame:CGRectMake(16, 56, 0, 0)];
-    [ff_panel addSubview:sw1];
-    UILabel *l1 = [[UILabel alloc] initWithFrame:CGRectMake(80, 56, 160, 31)];
-    l1.text = @"Feature 1";
-    [ff_panel addSubview:l1];
-
-    UISwitch *sw2 = [[UISwitch alloc] initWithFrame:CGRectMake(16, 104, 0, 0)];
-    [ff_panel addSubview:sw2];
-    UILabel *l2 = [[UILabel alloc] initWithFrame:CGRectMake(80, 104, 160, 31)];
-    l2.text = @"Feature 2";
-    [ff_panel addSubview:l2];
-
-    [window addSubview:ff_panel];
-}
-
-}
-
-@interface UIApplication (FFHook) @end
-
-@implementation UIApplication (FFHook)
-
-(void)ff_toggle { ff_guiVisible = !ff_guiVisible; ff_panel.hidden = !ff_guiVisible; }
+(void)ff_toggle; @end
 
 
-@end
+@implementation NSObject (FFActions)
 
-%hook UIApplication
-
-(void)applicationDidBecomeActive:(UIApplication *)application { %orig; FFBuildGUI(); }
+(void)ff_toggle { if (!ffPanel) return; ffVisible = !ffVisible; ffPanel.hidden = !ffVisible; } @end
 
 
-%end
+// Hook mínimo: solo para construir GUI cuando la app entra a foreground %hook UIApplication
+
+(void)applicationDidBecomeActive:(UIApplication *)application { %orig; // <-- %orig VÁLIDO (dentro de método hookeado) dispatch_async(dispatch_get_main_queue(), ^{ FFBuildGUI(); }); } %end
