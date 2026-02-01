@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: macos-latest
     env:
-      THEOS: ${{ runner.home }}/theos
+      THEOS: $HOME/theos
 
     steps:
       - name: Checkout repository
