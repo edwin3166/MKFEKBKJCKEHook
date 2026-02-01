@@ -1,46 +1,40 @@
-name: Build MKFEKBKJCKEHook
+name: Build iOS Tweak
 
 on:
-  push:
-    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-dylib:
+  build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Xcode Command Line Tools
-        run: |
-          if ! xcode-select -p &>/dev/null; then
-            sudo xcode-select --install
-          fi
-
-      - name: Install essential tools
+      - name: Install Homebrew tools
         run: |
           brew update
-          brew install make git ldid curl
+          brew install make git ldid
 
       - name: Install Theos
         run: |
           export THEOS=$HOME/theos
           echo "THEOS=$THEOS" >> $GITHUB_ENV
-          if [ ! -d "$THEOS" ]; then
-            git clone --branch master https://github.com/theos/theos.git $THEOS
-          fi
+          git clone --recursive https://github.com/theos/theos.git $THEOS
 
-      - name: Build dylib
+      - name: Update Theos (IMPORTANT)
+        run: |
+          export THEOS=$HOME/theos
+          $THEOS/bin/update-theos
+
+      - name: Build tweak
         run: |
           export THEOS=$THEOS
-          cd $GITHUB_WORKSPACE
           make clean
           make
 
-      - name: Upload dylib artifact
+      - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: MKFEKBKJCKEHook
-          path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
+          name: tweak-dylib
+          path: .theos/obj/debug/arm64/*.dylib
