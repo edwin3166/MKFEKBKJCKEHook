@@ -1,67 +1,85 @@
 #import <UIKit/UIKit.h>
 
-@interface RBLXRootViewController : UIViewController
-@end
+static UIView *menuView;
+static UIButton *toggleBtn;
 
-static UIView *rbxGUI = nil;
-
-static void showRobloxGUI() {
-    if (rbxGUI) return;
-
-    UIWindow *keyWindow = UIApplication.sharedApplication.keyWindow;
-    if (!keyWindow) return;
-
-    CGFloat width = 260;
-    CGFloat height = 160;
-
-    rbxGUI = [[UIView alloc] initWithFrame:CGRectMake(
-        (keyWindow.bounds.size.width - width) / 2,
-        100,
-        width,
-        height
-    )];
-
-    rbxGUI.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
-    rbxGUI.layer.cornerRadius = 14;
-    rbxGUI.layer.borderWidth = 1.5;
-    rbxGUI.layer.borderColor = UIColor.whiteColor.CGColor;
-
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, width, 30)];
-    title.text = @"Roblox Executor";
-    title.textColor = UIColor.whiteColor;
-    title.textAlignment = NSTextAlignmentCenter;
-    title.font = [UIFont boldSystemFontOfSize:18];
-    [rbxGUI addSubview:title];
-
-    UIButton *close = [UIButton buttonWithType:UIButtonTypeSystem];
-    close.frame = CGRectMake(width - 40, 5, 35, 35);
-    [close setTitle:@"✕" forState:UIControlStateNormal];
-    close.tintColor = UIColor.redColor;
-    [close addTarget:nil action:@selector(removeFromSuperview) forControlEvents:UIControlEventTouchUpInside];
-    [rbxGUI addSubview:close];
-
-    UILabel *info = [[UILabel alloc] initWithFrame:CGRectMake(10, 60, width - 20, 80)];
-    info.text = @"GUI activo\n(Executor base)";
-    info.textColor = UIColor.whiteColor;
-    info.textAlignment = NSTextAlignmentCenter;
-    info.numberOfLines = 2;
-    info.font = [UIFont systemFontOfSize:15];
-    [rbxGUI addSubview:info];
-
-    [keyWindow addSubview:rbxGUI];
+UIWindow *getKeyWindow() {
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if (window.isKeyWindow) {
+            return window;
+        }
+    }
+    return UIApplication.sharedApplication.windows.firstObject;
 }
 
-%hook RBLXRootViewController
+void showMenu() {
+    UIWindow *window = getKeyWindow();
+    if (!window) return;
 
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
+    if (menuView) return;
 
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            showRobloxGUI();
-        });
+    menuView = [[UIView alloc] initWithFrame:CGRectMake(40, 120, 260, 300)];
+    menuView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
+    menuView.layer.cornerRadius = 18;
+
+    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 260, 40)];
+    title.text = @"FF Executor";
+    title.textColor = UIColor.whiteColor;
+    title.textAlignment = NSTextAlignmentCenter;
+    title.font = [UIFont boldSystemFontOfSize:20];
+    [menuView addSubview:title];
+
+    UIButton *aimbot = [UIButton buttonWithType:UIButtonTypeSystem];
+    aimbot.frame = CGRectMake(20, 70, 220, 44);
+    [aimbot setTitle:@"Aimbot (GUI only)" forState:UIControlStateNormal];
+    aimbot.backgroundColor = UIColor.systemGreenColor;
+    aimbot.layer.cornerRadius = 12;
+    [aimbot setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    [menuView addSubview:aimbot];
+
+    [window addSubview:menuView];
+}
+
+void createToggleButton() {
+    UIWindow *window = getKeyWindow();
+    if (!window) return;
+
+    toggleBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    toggleBtn.frame = CGRectMake(20, 300, 60, 60);
+    toggleBtn.layer.cornerRadius = 30;
+    toggleBtn.backgroundColor = UIColor.systemGreenColor;
+    [toggleBtn setTitle:@"FF" forState:UIControlStateNormal];
+    [toggleBtn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+
+    [toggleBtn addTarget:nil action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
+
+    [window addSubview:toggleBtn];
+}
+
+@interface UIApplication (Hook)
+@end
+
+@implementation UIApplication (Hook)
+
++ (void)load {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        createToggleButton();
     });
 }
 
-%end
+@end
+
+@interface NSObject (Menu)
+@end
+
+@implementation NSObject (Menu)
+
+- (void)toggleMenu {
+    if (menuView.superview) {
+        [menuView removeFromSuperview];
+    } else {
+        showMenu();
+    }
+}
+
+@end
