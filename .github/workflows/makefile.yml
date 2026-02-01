@@ -1,6 +1,7 @@
-name: Build iOS Tweak
+name: Build Theos Tweak
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -8,28 +9,33 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Install Homebrew tools
+      - name: Set THEOS path (VERDE 🟢)
         run: |
-          brew update
-          brew install make git ldid
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
-      - name: Install Theos
+      - name: Install dependencies
         run: |
-          export THEOS=$HOME/theos
-          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          xcode-select --install || true
+          sudo softwareupdate --install-rosetta --agree-to-license || true
+
+      - name: Clone Theos
+        run: |
           git clone --recursive https://github.com/theos/theos.git $THEOS
 
-      - name: Update Theos (IMPORTANT)
+      - name: Update Theos (vendor/include, vendor/lib)
         run: |
-          export THEOS=$HOME/theos
           $THEOS/bin/update-theos
+
+      - name: Install ldid
+        run: |
+          brew update
+          brew install ldid
 
       - name: Build tweak
         run: |
-          export THEOS=$THEOS
           make clean
           make
 
@@ -37,4 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tweak-dylib
-          path: .theos/obj/debug/arm64/*.dylib
+          path: |
+            .theos/obj/**/**/*.dylib
