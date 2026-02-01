@@ -1,110 +1,64 @@
+// FFHook - TrollFools GUI Overlay (iOS 15+) // Target: Free Fire only
+
 #import <UIKit/UIKit.h>
 
-// ============================== //  Free Fire – GUI Overlay Only //  TrollFools compatible dylib //  iOS 15+ (scene-safe) // ==============================
+static BOOL ff_guiVisible = NO; static UIView *ff_panel = nil; static UIButton *ff_toggleBtn = nil;
 
-static BOOL ff_guiVisible = NO; static UIView *ff_panel = nil; static UIButton *ff_floatingBtn = nil;
+static UIWindow *FFGetActiveWindow(void) { if (@available(iOS 13.0, *)) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:UIWindowScene.class]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } if (ws.windows.count > 0) return ws.windows.firstObject; } } } return UIApplication.sharedApplication.delegate.window; }
 
-// -------- Window helper (iOS 15+) -------- static UIWindow *FFGetKeyWindow(void) { for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) { if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) { UIWindowScene *ws = (UIWindowScene *)scene; for (UIWindow *w in ws.windows) { if (w.isKeyWindow) return w; } } } return nil; }
+static void FFBuildGUI(void) { UIWindow *window = FFGetActiveWindow(); if (!window) return;
 
-// -------- Glass panel -------- static UIView *FFCreatePanel(void) { UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 260, 180)]; panel.center = CGPointMake(UIScreen.mainScreen.bounds.size.width/2, UIScreen.mainScreen.bounds.size.height/2); panel.layer.cornerRadius = 22; panel.clipsToBounds = YES;
-
-UIVisualEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterialDark];
-UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
-blurView.frame = panel.bounds;
-blurView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-[panel addSubview:blurView];
-
-UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 14, panel.bounds.size.width, 28)];
-title.text = @"FF Overlay";
-title.textAlignment = NSTextAlignmentCenter;
-title.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
-title.textColor = UIColor.whiteColor;
-[panel addSubview:title];
-
-UIButton *close = [UIButton buttonWithType:UIButtonTypeSystem];
-close.frame = CGRectMake(panel.bounds.size.width-44, 10, 34, 34);
-[close setTitle:@"✕" forState:UIControlStateNormal];
-close.tintColor = UIColor.whiteColor;
-close.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
-[close addTarget:nil action:@selector(ff_toggleGUI) forControlEvents:UIControlEventTouchUpInside];
-[panel addSubview:close];
-
-// Example toggles (placeholders)
-NSArray *labels = @[ @"Aimbot", @"ESP" ];
-for (int i = 0; i < labels.count; i++) {
-    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(24, 70 + i*44, 0, 0)];
-    [panel addSubview:sw];
-
-    UILabel *lb = [[UILabel alloc] initWithFrame:CGRectMake(90, 70 + i*44, 120, 30)];
-    lb.text = labels[i];
-    lb.textColor = UIColor.whiteColor;
-    lb.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-    [panel addSubview:lb];
+if (!ff_toggleBtn) {
+    ff_toggleBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    ff_toggleBtn.frame = CGRectMake(20, 120, 56, 56);
+    ff_toggleBtn.layer.cornerRadius = 28;
+    ff_toggleBtn.backgroundColor = [[UIColor systemBlueColor] colorWithAlphaComponent:0.85];
+    [ff_toggleBtn setTitle:@"FF" forState:UIControlStateNormal];
+    [ff_toggleBtn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    [ff_toggleBtn addTarget:nil action:@selector(ff_toggle) forControlEvents:UIControlEventTouchUpInside];
+    [window addSubview:ff_toggleBtn];
 }
 
-// Drag
-UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:panel action:@selector(ff_handlePan:)];
-[panel addGestureRecognizer:pan];
+if (!ff_panel) {
+    ff_panel = [[UIView alloc] initWithFrame:CGRectMake(20, 190, 260, 220)];
+    ff_panel.layer.cornerRadius = 16;
+    ff_panel.backgroundColor = [[UIColor systemBackgroundColor] colorWithAlphaComponent:0.92];
+    ff_panel.hidden = YES;
 
-return panel;
+    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, 228, 28)];
+    title.text = @"FF Overlay";
+    title.font = [UIFont boldSystemFontOfSize:18];
+    [ff_panel addSubview:title];
+
+    UISwitch *sw1 = [[UISwitch alloc] initWithFrame:CGRectMake(16, 56, 0, 0)];
+    [ff_panel addSubview:sw1];
+    UILabel *l1 = [[UILabel alloc] initWithFrame:CGRectMake(80, 56, 160, 31)];
+    l1.text = @"Feature 1";
+    [ff_panel addSubview:l1];
+
+    UISwitch *sw2 = [[UISwitch alloc] initWithFrame:CGRectMake(16, 104, 0, 0)];
+    [ff_panel addSubview:sw2];
+    UILabel *l2 = [[UILabel alloc] initWithFrame:CGRectMake(80, 104, 160, 31)];
+    l2.text = @"Feature 2";
+    [ff_panel addSubview:l2];
+
+    [window addSubview:ff_panel];
+}
 
 }
 
-// -------- Floating button -------- static UIButton *FFCreateFloatingButton(void) { UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom]; btn.frame = CGRectMake(20, 120, 56, 56); btn.layer.cornerRadius = 28; btn.backgroundColor = [UIColor colorWithWhite:0.15 alpha:0.9];
+@interface UIApplication (FFHook) @end
 
-UIVisualEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterialDark];
-UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
-blurView.frame = btn.bounds;
-blurView.layer.cornerRadius = 28;
-blurView.clipsToBounds = YES;
-blurView.userInteractionEnabled = NO;
-[btn addSubview:blurView];
+@implementation UIApplication (FFHook)
 
-UILabel *icon = [[UILabel alloc] initWithFrame:btn.bounds];
-icon.text = @"Δ";
-icon.textAlignment = NSTextAlignmentCenter;
-icon.font = [UIFont systemFontOfSize:26 weight:UIFontWeightBold];
-icon.textColor = UIColor.whiteColor;
-icon.userInteractionEnabled = NO;
-[btn addSubview:icon];
-
-[btn addTarget:nil action:@selector(ff_toggleGUI) forControlEvents:UIControlEventTouchUpInside];
-
-UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:btn action:@selector(ff_handlePan:)];
-[btn addGestureRecognizer:pan];
-
-return btn;
-
-}
-
-// -------- Actions -------- @interface UIView (FFPan)
-
-(void)ff_handlePan:(UIPanGestureRecognizer *)gr; @end
+(void)ff_toggle { ff_guiVisible = !ff_guiVisible; ff_panel.hidden = !ff_guiVisible; }
 
 
-@implementation UIView (FFPan)
+@end
 
-(void)ff_handlePan:(UIPanGestureRecognizer *)gr { CGPoint t = [gr translationInView:self.superview]; self.center = CGPointMake(self.center.x + t.x, self.center.y + t.y); [gr setTranslation:CGPointZero inView:self.superview]; } @end
+%hook UIApplication
 
-
-@interface NSObject (FFActions)
-
-(void)ff_toggleGUI; @end
+(void)applicationDidBecomeActive:(UIApplication *)application { %orig; FFBuildGUI(); }
 
 
-@implementation NSObject (FFActions)
-
-(void)ff_toggleGUI { UIWindow *w = FFGetKeyWindow(); if (!w) return;
-
-ff_guiVisible = !ff_guiVisible; if (ff_guiVisible) { if (!ff_panel) ff_panel = FFCreatePanel(); if (!ff_panel.superview) [w addSubview:ff_panel]; ff_panel.alpha = 0.0; [UIView animateWithDuration:0.25 animations:^{ ff_panel.alpha = 1.0; }]; } else { [UIView animateWithDuration:0.25 animations:^{ ff_panel.alpha = 0.0; } completion:^(BOOL f){ [ff_panel removeFromSuperview]; }]; } } @end
-
-
-// -------- Inject on Free Fire launch -------- %hook UIApplication
-
-(void)applicationDidBecomeActive:(UIApplication *)application { %orig;
-
-NSString *bid = NSBundle.mainBundle.bundleIdentifier ?: @""; if (![bid isEqualToString:@"com.dts.freefireth"] && ![bid isEqualToString:@"com.dts.freefiremax"]) { return; // Only Free Fire }
-
-UIWindow *w = FFGetKeyWindow(); if (!w) return;
-
-if (!ff_floatingBtn) ff_floatingBtn = FFCreateFloatingButton(); if (!ff_floatingBtn.superview) [w addSubview:ff_floatingBtn]; } %end
+%end
