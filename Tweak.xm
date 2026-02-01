@@ -1,80 +1,76 @@
+// Tweak.xm — GUI iOS neutral (rootless, TrollFools safe) // No hooks de cheats. Callbacks vacíos.
+
 #import <UIKit/UIKit.h>
 
-static UIWindow *ffWindow = nil;
-static UIView *ffPanel = nil;
+#pragma mark - Floating Button
 
-#pragma mark - Window helper (iOS 15+ safe)
+@interface FFButton : UIButton @end
 
-static UIWindow *FFGetKeyWindow(void) {
-    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
-        if (scene.activationState == UISceneActivationStateForegroundActive &&
-            [scene isKindOfClass:[UIWindowScene class]]) {
+@implementation FFButton
 
-            UIWindowScene *ws = (UIWindowScene *)scene;
-            for (UIWindow *w in ws.windows) {
-                if (w.isKeyWindow) return w;
-            }
-        }
-    }
-    return nil;
-}
+(instancetype)init { self = [super initWithFrame:CGRectMake(20, 200, 56, 56)]; if (self) { self.backgroundColor = [UIColor systemBlueColor]; self.layer.cornerRadius = 28; [self setTitle:@"≡" forState:UIControlStateNormal]; self.titleLabel.font = [UIFont boldSystemFontOfSize:26]; [self addTarget:self action:@selector(tap) forControlEvents:UIControlEventTouchUpInside]; } return self; }
 
-#pragma mark - GUI
+(void)tap { [[NSNotificationCenter defaultCenter] postNotificationName:@"FFToggleMenu" object:nil]; } @end
 
-static void FFBuildGUI(void) {
-    if (ffPanel) return;
 
-    ffWindow = FFGetKeyWindow();
-    if (!ffWindow) return;
+#pragma mark - Menu View
 
-    ffPanel = [[UIView alloc] initWithFrame:CGRectMake(40, 120, 240, 180)];
-    ffPanel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.8];
-    ffPanel.layer.cornerRadius = 14;
-    ffPanel.layer.borderWidth = 1.5;
-    ffPanel.layer.borderColor = UIColor.greenColor.CGColor;
+@interface FFMenu : UIView @end
 
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 240, 30)];
-    title.text = @"FF Executor";
-    title.textAlignment = NSTextAlignmentCenter;
-    title.textColor = UIColor.greenColor;
-    title.font = [UIFont boldSystemFontOfSize:18];
-    [ffPanel addSubview:title];
+@implementation FFMenu
 
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    btn.frame = CGRectMake(30, 70, 180, 40);
-    [btn setTitle:@"Toggle GUI" forState:UIControlStateNormal];
-    btn.tintColor = UIColor.greenColor;
-    btn.layer.borderWidth = 1;
-    btn.layer.borderColor = UIColor.greenColor.CGColor;
-    btn.layer.cornerRadius = 8;
-    [btn addTarget:nil action:@selector(ff_toggle) forControlEvents:UIControlEventTouchUpInside];
-    [ffPanel addSubview:btn];
+(instancetype)init { self = [super initWithFrame:CGRectMake(40, 120, 280, 360)]; if (self) { self.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.9]; self.layer.cornerRadius = 16; self.hidden = YES;
 
-    [ffWindow addSubview:ffPanel];
-}
+UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 12, 280, 28)];
+  title.text = @"Menu";
+  title.textColor = UIColor.whiteColor;
+  title.textAlignment = NSTextAlignmentCenter;
+  title.font = [UIFont boldSystemFontOfSize:18];
+  [self addSubview:title];
 
-#pragma mark - UIApplication hook
+  [self addToggle:@"Option 1" y:60 sel:@selector(t1:)];
+  [self addToggle:@"Option 2" y:110 sel:@selector(t2:)];
+  [self addToggle:@"Option 3" y:160 sel:@selector(t3:)];
 
-@interface UIApplication (FFHook)
-- (void)ff_toggle;
-@end
+  UISlider *sl = [[UISlider alloc] initWithFrame:CGRectMake(20, 230, 240, 30)];
+  [sl addTarget:self action:@selector(slide:) forControlEvents:UIControlEventValueChanged];
+  [self addSubview:sl];
 
-@implementation UIApplication (FFHook)
+} return self; }
 
-- (void)ff_toggle {
-    if (!ffPanel) {
-        FFBuildGUI();
-        return;
-    }
-    ffPanel.hidden = !ffPanel.hidden;
-}
+(void)addToggle:(NSString*)name y:(CGFloat)y sel:(SEL)sel { UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(20, y, 160, 30)]; l.text = name; l.textColor = UIColor.whiteColor; [self addSubview:l];
+
+UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(200, y, 0, 0)]; [s addTarget:self action:sel forControlEvents:UIControlEventValueChanged]; [self addSubview:s]; }
+
+(void)t1:(UISwitch*)s { NSLog(@"T1 %d", s.isOn); }
+
+(void)t2:(UISwitch*)s { NSLog(@"T2 %d", s.isOn); }
+
+(void)t3:(UISwitch*)s { NSLog(@"T3 %d", s.isOn); }
+
+(void)slide:(UISlider*)sl { NSLog(@"Slider %f", sl.value); }
+
 
 @end
 
-__attribute__((constructor))
-static void FFInit(void) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(), ^{
-        FFBuildGUI();
-    });
+#pragma mark - Loader (NO %orig fuera de hooks)
+
+static FFMenu *gMenu;
+
+%ctor { dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2*NSEC_PER_SEC), dispatch_get_main_queue(), ^{ UIWindow *w = UIApplication.sharedApplication.keyWindow; if (!w) return;
+
+FFButton *btn = [[FFButton alloc] init];
+    gMenu = [[FFMenu alloc] init];
+
+    [w addSubview:btn];
+    [w addSubview:gMenu];
+
+    [[NSNotificationCenter defaultCenter] addObserverForName:@"FFToggleMenu"
+                                                      object:nil
+                                                       queue:NSOperationQueue.mainQueue
+                                                  usingBlock:^(NSNotification * _Nonnull note) {
+        gMenu.hidden = !gMenu.hidden;
+    }];
+});
+
 }
