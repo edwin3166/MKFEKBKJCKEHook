@@ -11,21 +11,21 @@ jobs:
 
     env:
       THEOS: $HOME/theos
-      PATH: $PATH:$HOME/theos/bin  # <- Asegúrate de no sobrescribir PATH
+      PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/theos/bin
 
     steps:
-    - name: Verify system tools
-      run: |
-        echo "Checking essential commands..."
-        which tar
-        tar --version
-        which git
-        git --version
-        which make
-        make --version
-
-    - name: Checkout repository
+    - name: Check out repository
       uses: actions/checkout@v3
+
+    - name: Verify essential commands
+      run: |
+        echo "PATH=$PATH"
+        tar --version
+        git --version
+        make --version
+        which tar
+        which git
+        which make
 
     - name: Install Homebrew (if missing)
       run: |
@@ -38,11 +38,12 @@ jobs:
     - name: Install ldid
       run: brew install ldid
 
-    - name: Install Theos
+    - name: Install Theos (if missing)
       run: |
         if [ ! -d "$HOME/theos" ]; then
           git clone --branch master https://github.com/theos/theos.git $HOME/theos
         fi
+        $HOME/theos/bin/update-theos
 
     - name: Build tweak
       run: |
