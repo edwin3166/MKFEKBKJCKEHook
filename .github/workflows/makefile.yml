@@ -10,8 +10,8 @@ jobs:
     runs-on: macos-latest
 
     env:
-      THEOS: ${{ runner.home }}/theos
-      PATH: ${{ runner.home }}/theos/bin:${{ env.PATH }}
+      THEOS: $HOME/theos
+      PATH: $HOME/theos/bin:$PATH
 
     steps:
     - name: Checkout repo
@@ -29,8 +29,7 @@ jobs:
       run: brew install ldid
 
     - name: Install Theos
-      run: |
-        git clone --branch master https://github.com/theos/theos.git $THEOS
+      run: git clone --branch master https://github.com/theos/theos.git $HOME/theos
 
     - name: Build tweak
       run: |
