@@ -1,4 +1,4 @@
-name: Build MKFEKBKJCKEHook dylib
+name: Build MKFEKBKJCKEHook
 
 on:
   push:
@@ -9,38 +9,37 @@ jobs:
   build:
     runs-on: macos-latest
 
+    env:
+      THEOS: ${{ runner.home }}/theos
+      PATH: ${{ runner.home }}/theos/bin:${{ env.PATH }}
+
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Install ldid
+    - name: Install Homebrew (if missing)
       run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-        brew install ldid
-        export PATH="/opt/homebrew/bin:$PATH"
+        if ! command -v brew &>/dev/null; then
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
+
+    - name: Install ldid
+      run: brew install ldid
 
     - name: Install Theos
       run: |
-        git clone --branch master https://github.com/theos/theos.git $HOME/theos
-        export THEOS=$HOME/theos
-        $THEOS/bin/update-theos
+        git clone --branch master https://github.com/theos/theos.git $THEOS
 
-    - name: Build dylib
+    - name: Build tweak
       run: |
-        export THEOS=$HOME/theos
         cd $GITHUB_WORKSPACE
         make clean
-        export TWEAK_CFLAGS="-fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-vla"
         make
 
-    - name: List generated dylib
-      run: ls -la $GITHUB_WORKSPACE/.theos/obj/debug/arm64/
-
-    - name: Upload dylib artifact
-      if: always()
+    - name: Upload dylib
       uses: actions/upload-artifact@v4
       with:
-        name: MKFEKBKJCKEHook-dylib
+        name: MKFEKBKJCKEHook.dylib
         path: $GITHUB_WORKSPACE/.theos/obj/debug/arm64/*.dylib
-        if-no-files-found: warn
