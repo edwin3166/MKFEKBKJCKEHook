@@ -11,10 +11,20 @@ jobs:
 
     env:
       THEOS: $HOME/theos
-      PATH: $PATH:$HOME/theos/bin
+      PATH: $PATH:$HOME/theos/bin  # <- Asegúrate de no sobrescribir PATH
 
     steps:
-    - name: Checkout repo
+    - name: Verify system tools
+      run: |
+        echo "Checking essential commands..."
+        which tar
+        tar --version
+        which git
+        git --version
+        which make
+        make --version
+
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Install Homebrew (if missing)
@@ -40,7 +50,7 @@ jobs:
         make clean
         make
 
-    - name: Upload dylib
+    - name: Upload dylib artifact
       uses: actions/upload-artifact@v4
       with:
         name: MKFEKBKJCKEHook.dylib
